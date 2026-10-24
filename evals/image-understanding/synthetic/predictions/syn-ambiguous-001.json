@@ -1,0 +1,37 @@
+{
+  "recordType": "image_understanding_run",
+  "schemaVersion": 1,
+  "caseId": "syn-ambiguous-001",
+  "recordedAt": "2026-01-01T00:00:00.000Z",
+  "dataSource": "mock",
+  "image": {
+    "sha256": "a438a49faa742ff6ecb1b7f1b6eafb153b01740493ad53e780eebd1686294615",
+    "mimeType": "image/png",
+    "bytes": 1024
+  },
+  "referenceId": "ref-local-a438a49faa742ff6",
+  "request": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096,
+    "timeoutMs": 60000
+  },
+  "response": {
+    "responseId": "resp_synthetic_syn-ambiguous-001",
+    "responseModel": "gpt-6-luna",
+    "usage": {
+      "inputTokens": 1900,
+      "outputTokens": 150,
+      "totalTokens": 2050,
+      "reasoningTokens": 35
+    },
+    "durationMs": 2700
+  },
+  "result": {
+    "kind": "not_identified",
+    "modelOutcome": "ambiguous_target",
+    "modelReason": "SYNTHETIC: several furniture items compete."
+  }
+}

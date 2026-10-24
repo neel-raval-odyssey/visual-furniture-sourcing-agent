@@ -1,0 +1,37 @@
+{
+  "recordType": "image_understanding_run",
+  "schemaVersion": 1,
+  "caseId": "syn-table-001",
+  "recordedAt": "2026-01-01T00:00:00.000Z",
+  "dataSource": "mock",
+  "image": {
+    "sha256": "f3dd3b917a294e79a5615bb3729293b4775aab8f720bfecbb7ec1bb00a9620a0",
+    "mimeType": "image/png",
+    "bytes": 1024
+  },
+  "referenceId": "ref-local-f3dd3b917a294e79",
+  "request": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096,
+    "timeoutMs": 60000
+  },
+  "response": {
+    "responseId": "resp_synthetic_syn-table-001",
+    "responseModel": "gpt-6-luna",
+    "usage": {
+      "inputTokens": 1700,
+      "outputTokens": 120,
+      "totalTokens": 1820,
+      "reasoningTokens": 30
+    },
+    "durationMs": 2500
+  },
+  "result": {
+    "kind": "not_identified",
+    "modelOutcome": "no_furniture",
+    "modelReason": "SYNTHETIC: image too dark to see furniture."
+  }
+}

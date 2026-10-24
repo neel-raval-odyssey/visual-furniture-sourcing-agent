@@ -1,0 +1,37 @@
+{
+  "recordType": "image_understanding_run",
+  "schemaVersion": 1,
+  "caseId": "syn-landscape-001",
+  "recordedAt": "2026-01-01T00:00:00.000Z",
+  "dataSource": "mock",
+  "image": {
+    "sha256": "9785c4ed0fd3b74143c3a54ab2b61d9a513e6d9ee87453a7afe28b38c4003453",
+    "mimeType": "image/png",
+    "bytes": 1024
+  },
+  "referenceId": "ref-local-9785c4ed0fd3b741",
+  "request": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096,
+    "timeoutMs": 60000
+  },
+  "response": {
+    "responseId": "resp_synthetic_syn-landscape-001",
+    "responseModel": "gpt-6-luna",
+    "usage": {
+      "inputTokens": 1600,
+      "outputTokens": 100,
+      "totalTokens": 1700,
+      "reasoningTokens": 20
+    },
+    "durationMs": 2100
+  },
+  "result": {
+    "kind": "not_identified",
+    "modelOutcome": "no_furniture",
+    "modelReason": "SYNTHETIC: a landscape."
+  }
+}

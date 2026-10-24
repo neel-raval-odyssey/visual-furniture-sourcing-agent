@@ -45,7 +45,8 @@ Run from the repository root:
 | `pnpm typecheck` | Generate Next.js route types and run `tsc`  |
 | `pnpm test`      | Run unit tests (Vitest)                     |
 | `pnpm demo:pipeline` | Run one synthetic sourcing workflow and print a summary (mock data only) |
-| `pnpm analyze:image --file <path>` | Validate a local photo and show the request settings (dry run, no API call). Add `--live` for one paid GPT-6 Luna request |
+| `pnpm analyze:image --file <path>` | Validate a local photo and show the request settings (dry run, no API call). Add `--live` for one paid GPT-6 Luna request; `--case <id> --output <file.json>` saves an evaluation record |
+| `pnpm eval:images` | Offline image-understanding evaluation: reads saved runs and reviews and writes `report.json` and `report.md` (see [evals/image-understanding](evals/image-understanding/README.md)) |
 | `pnpm check`     | Lint, typecheck, test and build in sequence |
 
 ## Analysing a local furniture photo
@@ -83,6 +84,7 @@ pnpm analyze:image --file "/path/to/chair.jpg" --live
 
 ```
 apps/web/      Next.js app (App Router, TypeScript, Tailwind CSS, ESLint)
+evals/         Shareable evaluation datasets and guides (evals/local/ is private and git-ignored)
 services/      Future backend services (Python embedding service)
 docs/          Architecture and evaluation documents
 AGENTS.md      Rules for AI agents working in this repo

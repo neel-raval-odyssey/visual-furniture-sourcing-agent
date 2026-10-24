@@ -65,6 +65,11 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
 - `discovery/`: the `AlibabaDiscoveryAdapter` interface (`discoverCandidates(request) → result`). Discovery returns candidates, suppliers and provenance only. It never scores similarity or ranks results.
 - `discovery/mock/`: `MockAlibabaDiscoveryAdapter` and synthetic fixtures (example.com URLs, `[MOCK]` titles, `dataSource: "mock"`). It applies simple category and text filters, keeps fixture order and makes no network requests.
 - `understanding/`: `ImageUnderstandingService.analyze(reference) → FurnitureFingerprint`. The mock looks up hand-written fingerprints by reference id. It doesn't read pixels, and it throws `UnsupportedReferenceError` instead of inventing a fingerprint. `understanding/openai/` holds the real implementation (below).
+- `evaluation/`: offline evaluation of image understanding. It has no API calls and doesn't load the OpenAI SDK.
+  - Zod schemas for the dataset, run records and human reviews.
+  - A deterministic metrics engine, plus JSON and Markdown reports.
+  - `analyze:image --output` writes a run record with the fingerprint, or a typed `not_identified` / `error` result, plus settings, usage, duration and image SHA-256.
+  - `FurnitureNotIdentifiedError` and `VisionModelError` now optionally carry `response` (id, reported model, usage), so a rejection's tokens and trace aren't lost.
 - `image-input/`: `ReferenceImageContentProvider` resolves a reference's bytes (JPEG, PNG or WebP, at most 10 MB, format checked by file signature). It's independent of the model client. The local CLI uses a file reader and an in-memory provider; uploads and storage will plug in here later.
 - `verification/`: `VisualVerificationService.verify({ reference, fingerprint, listings }) → VisualMatchAssessment[]`.
   - It assesses only the listings it is given, at most one assessment per listing. It never searches, enriches suppliers or ranks.

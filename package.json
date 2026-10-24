@@ -14,6 +14,7 @@
     "test": "pnpm --filter web test",
     "demo:pipeline": "pnpm --filter web demo:pipeline",
     "analyze:image": "pnpm --filter web analyze:image",
+    "eval:images": "pnpm --filter web eval:images",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }

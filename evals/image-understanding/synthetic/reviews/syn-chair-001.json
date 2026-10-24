@@ -1,0 +1,45 @@
+{
+  "recordType": "image_understanding_review",
+  "schemaVersion": 1,
+  "caseId": "syn-chair-001",
+  "responseId": "resp_synthetic_syn-chair-001",
+  "status": "complete",
+  "reviewer": "synthetic-reviewer",
+  "reviewedAt": "2026-01-02T00:00:00.000Z",
+  "objectSelection": "correct",
+  "features": [
+    {
+      "featureId": "curved-backrest",
+      "judgement": "contradicted",
+      "note": "SYNTHETIC: described as a stool"
+    },
+    {
+      "featureId": "four-legs",
+      "judgement": "partial"
+    }
+  ],
+  "unsupportedAssertions": [
+    {
+      "claim": "solid walnut",
+      "type": "overconfident_material_or_dimension",
+      "explanation": "SYNTHETIC: stated as observed"
+    }
+  ],
+  "uncertainty": {
+    "judgement": "overconfident"
+  },
+  "searchQueries": {
+    "rating": 1,
+    "broadCategoryQueryPresent": false,
+    "distinctiveTermsIncluded": false,
+    "excessivelyNarrow": false,
+    "irrelevantOrFabricatedTerms": false,
+    "exploresAlternatives": false
+  },
+  "failureTags": [
+    "wrong_category",
+    "missed_distinctive_feature",
+    "poor_search_queries"
+  ],
+  "notes": "SYNTHETIC review for tooling tests."
+}

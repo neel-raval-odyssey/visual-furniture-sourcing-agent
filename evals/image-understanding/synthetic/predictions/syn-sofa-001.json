@@ -1,0 +1,34 @@
+{
+  "recordType": "image_understanding_run",
+  "schemaVersion": 1,
+  "caseId": "syn-sofa-001",
+  "recordedAt": "2026-01-01T00:00:00.000Z",
+  "dataSource": "mock",
+  "image": {
+    "sha256": "84e03034af0c06576b78992dfa18598a4ac5f06202b38fa6424ab1ff24c1eb00",
+    "mimeType": "image/png",
+    "bytes": 1024
+  },
+  "referenceId": "ref-local-84e03034af0c0657",
+  "request": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096,
+    "timeoutMs": 60000
+  },
+  "response": {
+    "responseId": null,
+    "responseModel": null,
+    "usage": null,
+    "durationMs": 300
+  },
+  "result": {
+    "kind": "error",
+    "errorCategory": "rate_limit",
+    "message": "Rate limit or quota exceeded (429)",
+    "status": 429,
+    "requestId": "req_synthetic"
+  }
+}

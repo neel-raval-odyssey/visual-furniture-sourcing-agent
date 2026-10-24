@@ -1,0 +1,46 @@
+{
+  "recordType": "image_understanding_review",
+  "schemaVersion": 1,
+  "caseId": "syn-bed-001",
+  "responseId": "resp_synthetic_syn-bed-001",
+  "status": "complete",
+  "reviewer": "synthetic-reviewer",
+  "reviewedAt": "2026-01-02T00:00:00.000Z",
+  "objectSelection": "correct",
+  "features": [
+    {
+      "featureId": "arched-headboard",
+      "judgement": "captured"
+    },
+    {
+      "featureId": "low-footboard",
+      "judgement": "captured"
+    },
+    {
+      "featureId": "turned-legs",
+      "judgement": "missed"
+    }
+  ],
+  "unsupportedAssertions": [
+    {
+      "claim": "solid oak",
+      "type": "overconfident_material_or_dimension",
+      "explanation": "SYNTHETIC: species not verifiable"
+    }
+  ],
+  "uncertainty": {
+    "judgement": "appropriate"
+  },
+  "searchQueries": {
+    "rating": 4,
+    "broadCategoryQueryPresent": true,
+    "distinctiveTermsIncluded": true,
+    "excessivelyNarrow": false,
+    "irrelevantOrFabricatedTerms": false,
+    "exploresAlternatives": true
+  },
+  "failureTags": [
+    "overconfident_material"
+  ],
+  "notes": "SYNTHETIC review for tooling tests."
+}

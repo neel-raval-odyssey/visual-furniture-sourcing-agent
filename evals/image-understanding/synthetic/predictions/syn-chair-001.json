@@ -1,0 +1,66 @@
+{
+  "recordType": "image_understanding_run",
+  "schemaVersion": 1,
+  "caseId": "syn-chair-001",
+  "recordedAt": "2026-01-01T00:00:00.000Z",
+  "dataSource": "mock",
+  "image": {
+    "sha256": "7cfce0c62cd5ccefa5d927548c5e554ba296bafcea7e8e444ecacca9594eb60e",
+    "mimeType": "image/png",
+    "bytes": 1024
+  },
+  "referenceId": "ref-local-7cfce0c62cd5ccef",
+  "request": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096,
+    "timeoutMs": 60000
+  },
+  "response": {
+    "responseId": "resp_synthetic_syn-chair-001",
+    "responseModel": "gpt-6-luna",
+    "usage": {
+      "inputTokens": 1800,
+      "outputTokens": 500,
+      "totalTokens": 2300,
+      "reasoningTokens": 40
+    },
+    "durationMs": 3900
+  },
+  "result": {
+    "kind": "furniture_identified",
+    "fingerprint": {
+      "id": "fp-synthetic-syn-chair-001",
+      "referenceImageIds": [
+        "ref-local-7cfce0c62cd5ccef"
+      ],
+      "category": "stool",
+      "structure": [
+        {
+          "attribute": "legs",
+          "certainty": "observed",
+          "value": "four straight legs"
+        }
+      ],
+      "appearance": [
+        {
+          "attribute": "material",
+          "certainty": "observed",
+          "value": "solid walnut"
+        }
+      ],
+      "distinctiveFeatures": [],
+      "searchQueries": [
+        "wooden stool",
+        "wooden stool"
+      ],
+      "source": {
+        "kind": "fixture",
+        "dataSource": "mock"
+      },
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  }
+}

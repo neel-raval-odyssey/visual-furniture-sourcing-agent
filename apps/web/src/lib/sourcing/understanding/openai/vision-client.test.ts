@@ -119,6 +119,18 @@ describe("OpenAIVisionClient response handling", () => {
     expect(error.message).toContain("max_output_tokens");
   });
 
+  it("keeps response id and usage on failures that happen after a response", async () => {
+    const { client } = clientWith(async () =>
+      fakeResponse({ status: "incomplete", incomplete_details: { reason: "max_output_tokens" }, output_parsed: null }),
+    );
+    const error = await expectCategory(client, "incomplete");
+    expect(error.response).toEqual({
+      responseId: "resp_synthetic_1",
+      responseModel: "gpt-6-luna",
+      usage: { inputTokens: 1200, outputTokens: 300, totalTokens: 1500, reasoningTokens: 80 },
+    });
+  });
+
   it("reports missing parsed output", async () => {
     const { client } = clientWith(async () => fakeResponse({ output: [], output_parsed: null }));
     await expectCategory(client, "missing_output");

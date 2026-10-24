@@ -4,7 +4,7 @@ import type { ReferenceImageContentProvider } from "../../image-input/image-cont
 import { furnitureFingerprintSchema } from "../../validation/fingerprint";
 import { summarizeIssues } from "../../validation/issues";
 import type { ImageUnderstandingService } from "../types";
-import { VisionModelError } from "./errors";
+import { FurnitureNotIdentifiedError, VisionModelError } from "./errors";
 import { mapRawAnalysisToFingerprint } from "./mapping";
 import type { VisionModelClient, VisionTokenUsage } from "./vision-client";
 
@@ -48,22 +48,32 @@ export class OpenAIImageUnderstandingService implements ImageUnderstandingServic
     const image = await images.load(reference);
     const result = await vision.analyzeImage(image);
 
-    const fingerprint = mapRawAnalysisToFingerprint(result.analysis, reference, {
-      fingerprintId: generateId(),
-      createdAt: now().toISOString(),
-      // The API-reported model (set by OpenAI, not by model output), falling
-      // back to the configured id.
-      modelId: result.responseModel || vision.settings.model,
-    });
+    const response = { responseId: result.responseId, responseModel: result.responseModel, usage: result.usage };
 
-    const checked = furnitureFingerprintSchema.safeParse(fingerprint);
-    if (!checked.success) {
-      throw new VisionModelError(
-        "malformed_output",
-        `Mapped fingerprint failed validation: ${summarizeIssues(checked.error)}`,
-        { cause: checked.error },
-      );
+    try {
+      const fingerprint = mapRawAnalysisToFingerprint(result.analysis, reference, {
+        fingerprintId: generateId(),
+        createdAt: now().toISOString(),
+        // The API-reported model (set by OpenAI, not by model output), falling
+        // back to the configured id.
+        modelId: result.responseModel || vision.settings.model,
+      });
+
+      const checked = furnitureFingerprintSchema.safeParse(fingerprint);
+      if (!checked.success) {
+        throw new VisionModelError(
+          "malformed_output",
+          `Mapped fingerprint failed validation: ${summarizeIssues(checked.error)}`,
+          { cause: checked.error },
+        );
+      }
+      return { fingerprint: checked.data, responseId: result.responseId, usage: result.usage };
+    } catch (error) {
+      // Keep response metadata (tokens, id) on rejections and mapping failures.
+      if (error instanceof FurnitureNotIdentifiedError || error instanceof VisionModelError) {
+        error.response ??= response;
+      }
+      throw error;
     }
-    return { fingerprint: checked.data, responseId: result.responseId, usage: result.usage };
   }
 }

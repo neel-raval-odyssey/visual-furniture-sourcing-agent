@@ -70,6 +70,16 @@ describe("OpenAIImageUnderstandingService", () => {
     );
   });
 
+  it("attaches response metadata to rejections so token usage is not lost", async () => {
+    const error = await createService(fakeVision(SYNTHETIC_RAW_NO_FURNITURE)).analyze(reference).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(FurnitureNotIdentifiedError);
+    expect((error as FurnitureNotIdentifiedError).response).toEqual({
+      responseId: "resp_synthetic_1",
+      responseModel: "gpt-6-luna",
+      usage: { inputTokens: 1000, outputTokens: 200, totalTokens: 1200 },
+    });
+  });
+
   it("does not call the model when the image cannot be resolved", async () => {
     const vision = fakeVision(SYNTHETIC_RAW_CHAIR);
     const service = new OpenAIImageUnderstandingService({ images: new InMemoryImageContentProvider(), vision });

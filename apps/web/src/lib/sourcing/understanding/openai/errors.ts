@@ -1,4 +1,16 @@
 import type { RawAnalysisOutcome } from "./raw-response";
+import type { VisionTokenUsage } from "./vision-client";
+
+/**
+ * Metadata of a model response that was received but could not be turned
+ * into a fingerprint. Kept so evaluations can account for tokens and trace
+ * the response. Contains no model output.
+ */
+export interface ModelResponseMeta {
+  responseId: string;
+  responseModel: string;
+  usage?: VisionTokenUsage;
+}
 
 export type VisionModelErrorCategory =
   | "refusal"
@@ -24,17 +36,20 @@ export class VisionModelError extends Error {
   readonly status?: number;
   /** Provider request id, useful when contacting support. */
   readonly requestId?: string;
+  /** Set when a response was received before the failure. */
+  response?: ModelResponseMeta;
 
   constructor(
     category: VisionModelErrorCategory,
     message: string,
-    details: { status?: number; requestId?: string; cause?: unknown } = {},
+    details: { status?: number; requestId?: string; cause?: unknown; response?: ModelResponseMeta } = {},
   ) {
     super(message, { cause: details.cause });
     this.name = "VisionModelError";
     this.category = category;
     this.status = details.status;
     this.requestId = details.requestId;
+    this.response = details.response;
   }
 }
 
@@ -46,6 +61,8 @@ export class FurnitureNotIdentifiedError extends Error {
   readonly outcome: Exclude<RawAnalysisOutcome, "furniture_identified">;
   /** Model-written explanation, truncated. Untrusted text. */
   readonly modelReason: string;
+  /** Attached by the service so token usage of a rejection is not lost. */
+  response?: ModelResponseMeta;
 
   constructor(outcome: Exclude<RawAnalysisOutcome, "furniture_identified">, modelReason: string) {
     super(`No furniture fingerprint: model reported "${outcome}"`);

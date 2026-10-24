@@ -13,6 +13,9 @@ next-env.d.ts
 .env.*
 !.env.example
 
+# Private evaluation data: local image mappings, runs, reviews, reports
+evals/local/
+
 # Personal Claude Code configuration
 CLAUDE.local.md
 .claude/settings.local.json

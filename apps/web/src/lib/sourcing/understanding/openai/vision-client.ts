@@ -3,7 +3,7 @@ import { zodTextFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import { toDataUrl, type ImageContent } from "../../image-input/image-content";
 import { summarizeIssues } from "../../validation/issues";
-import { VisionModelError } from "./errors";
+import { VisionModelError, type ModelResponseMeta } from "./errors";
 import {
   FURNITURE_UNDERSTANDING_INSTRUCTIONS,
   FURNITURE_UNDERSTANDING_USER_PROMPT,
@@ -131,11 +131,13 @@ export class OpenAIVisionClient implements VisionModelClient {
       const reason = response.incomplete_details?.reason ?? "unknown";
       throw new VisionModelError("incomplete", `Model response was incomplete (${reason})`, {
         requestId: response._request_id ?? undefined,
+        response: responseMeta(response),
       });
     }
     if (response.status && response.status !== "completed") {
       throw new VisionModelError("unexpected", `Model response status was "${response.status}"`, {
         requestId: response._request_id ?? undefined,
+        response: responseMeta(response),
       });
     }
 
@@ -143,12 +145,14 @@ export class OpenAIVisionClient implements VisionModelClient {
     if (refusal !== undefined) {
       throw new VisionModelError("refusal", "Model refused to analyse the image", {
         requestId: response._request_id ?? undefined,
+        response: responseMeta(response),
       });
     }
 
     if (response.output_parsed == null) {
       throw new VisionModelError("missing_output", "Model returned no structured output", {
         requestId: response._request_id ?? undefined,
+        response: responseMeta(response),
       });
     }
 
@@ -158,22 +162,13 @@ export class OpenAIVisionClient implements VisionModelClient {
       throw new VisionModelError(
         "malformed_output",
         `Model output failed validation: ${summarizeIssues(checked.error)}`,
-        { cause: checked.error },
+        { cause: checked.error, requestId: response._request_id ?? undefined, response: responseMeta(response) },
       );
     }
 
     return {
       analysis: checked.data,
-      responseModel: response.model,
-      responseId: response.id,
-      usage: response.usage
-        ? {
-            inputTokens: response.usage.input_tokens,
-            outputTokens: response.usage.output_tokens,
-            totalTokens: response.usage.total_tokens,
-            reasoningTokens: response.usage.output_tokens_details?.reasoning_tokens,
-          }
-        : undefined,
+      ...responseMeta(response),
     };
   }
 
@@ -182,6 +177,21 @@ export class OpenAIVisionClient implements VisionModelClient {
       OpenAI.Responses.ParsedResponse<RawVisionAnalysis> & { _request_id?: string | null }
     >;
   }
+}
+
+function responseMeta(response: OpenAI.Responses.Response): ModelResponseMeta {
+  return {
+    responseId: response.id,
+    responseModel: response.model,
+    usage: response.usage
+      ? {
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+          totalTokens: response.usage.total_tokens,
+          reasoningTokens: response.usage.output_tokens_details?.reasoning_tokens,
+        }
+      : undefined,
+  };
 }
 
 function findRefusal(output: readonly OpenAI.Responses.ResponseOutputItem[]): string | undefined {

@@ -1,8 +1,10 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { TEST_PNG, TEST_TEXT } from "../image-input/test-fixtures";
+import { runRecordSchema } from "../evaluation/run-record";
 import { FurnitureNotIdentifiedError, VisionModelError } from "../understanding/openai/errors";
 import { mapRawAnalysisToFingerprint } from "../understanding/openai/mapping";
 import { SYNTHETIC_RAW_CHAIR } from "../understanding/openai/test-fixtures";
@@ -211,5 +213,105 @@ describe("live mode", () => {
     const cli = setup({ service: failingService(new Error(`leaked ${FAKE_KEY}`)) });
     expect(await cli.run("--file", "chair.png", "--live")).toBe(EXIT_ANALYSIS_FAILED);
     expect(cli.all()).not.toContain(FAKE_KEY);
+  });
+});
+
+describe("evaluation records (--output, --case)", () => {
+  const record = async (name: string) => runRecordSchema.parse(JSON.parse(await readFile(join(dir, name), "utf8")));
+
+  it("does not write a record or enable live mode in a dry run", async () => {
+    const cli = setup();
+    expect(await cli.run("--file", "chair.png", "--output", "dry.json", "--case", "ettrick-bed")).toBe(EXIT_OK);
+    expect(cli.createService).not.toHaveBeenCalled();
+    expect(existsSync(join(dir, "dry.json"))).toBe(false);
+    expect(cli.out.join("\n")).toContain("would be saved to dry.json in --live mode");
+  });
+
+  it("saves a valid record in live mode while keeping stdout unchanged", async () => {
+    const cli = setup();
+    expect(await cli.run("--file", "chair.png", "--live", "--json", "--case", "ettrick-bed", "--output", "records/run-1.json")).toBe(EXIT_OK);
+
+    const saved = await record("records/run-1.json");
+    expect(saved).toMatchObject({
+      caseId: "ettrick-bed",
+      dataSource: "live",
+      request: { model: "gpt-6-luna", instructionsVersion: "2026-10-24.1", imageDetail: "high", reasoningEffort: "low", maxOutputTokens: 4096 },
+      response: { responseId: "resp_synthetic_1", usage: { totalTokens: 1500 } },
+      result: { kind: "furniture_identified" },
+    });
+    expect(saved.response.durationMs).toBeGreaterThanOrEqual(0);
+    expect(JSON.parse(cli.out.join("\n"))).toHaveProperty("fingerprint");
+    expect(cli.err.join("\n")).toContain("Saved evaluation record to records/run-1.json");
+
+    const text = await readFile(join(dir, "records/run-1.json"), "utf8");
+    expect(text).not.toContain(FAKE_KEY);
+    expect(text).not.toContain(Buffer.from(TEST_PNG).toString("base64"));
+    expect(text).not.toContain(dir);
+  });
+
+  it("refuses an existing destination before any request is made", async () => {
+    await writeFile(join(dir, "taken.json"), "{}");
+    const cli = setup();
+    expect(await cli.run("--file", "chair.png", "--live", "--output", "taken.json")).toBe(EXIT_USAGE);
+    expect(cli.err[0]).toContain("never overwritten");
+    expect(cli.createService).not.toHaveBeenCalled();
+    expect(await readFile(join(dir, "taken.json"), "utf8")).toBe("{}");
+  });
+
+  it.each([
+    ["a non-JSON file name", "record.txt", /must end in .json/],
+    ["a parent path that is a file", "chair.png/record.json", /parent path is not a folder/],
+  ])("rejects %s before any request is made", async (_name, output, message) => {
+    const cli = setup();
+    expect(await cli.run("--file", "chair.png", "--live", "--output", output)).toBe(EXIT_USAGE);
+    expect(cli.err[0]).toMatch(message);
+    expect(cli.createService).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid --case id", async () => {
+    const cli = setup();
+    expect(await cli.run("--file", "chair.png", "--case", "Ettrick Bed")).toBe(EXIT_USAGE);
+  });
+
+  it("saves a correct rejection as not_identified with its usage, keeping exit code 1", async () => {
+    const error = new FurnitureNotIdentifiedError("no_furniture", "The image shows a landscape.");
+    error.response = { responseId: "resp_2", responseModel: "gpt-6-luna", usage: { inputTokens: 900, outputTokens: 60, totalTokens: 960 } };
+    const cli = setup({ service: failingService(error) });
+
+    expect(await cli.run("--file", "chair.png", "--live", "--output", "rejection.json")).toBe(EXIT_ANALYSIS_FAILED);
+    const saved = await record("rejection.json");
+    expect(saved.result).toEqual({ kind: "not_identified", modelOutcome: "no_furniture", modelReason: "The image shows a landscape." });
+    expect(saved.response).toMatchObject({ responseId: "resp_2", usage: { totalTokens: 960 } });
+    expect(saved.caseId).toBeNull();
+  });
+
+  it("saves model errors with their category and no secrets", async () => {
+    const cli = setup({ service: failingService(new VisionModelError("authentication", "OpenAI rejected the API key (401)", { status: 401, requestId: "req_9" })) });
+    expect(await cli.run("--file", "chair.png", "--live", "--output", "auth-error.json")).toBe(EXIT_ANALYSIS_FAILED);
+    const saved = await record("auth-error.json");
+    expect(saved.result).toEqual({ kind: "error", errorCategory: "authentication", message: "OpenAI rejected the API key (401)", status: 401, requestId: "req_9" });
+    expect(JSON.stringify(saved)).not.toContain(FAKE_KEY);
+  });
+
+  it("prints the record instead of losing it when the file cannot be written", async () => {
+    const target = join(dir, "raced.json");
+    const service = successService();
+    const analyze = service.analyzeWithDetails;
+    service.analyzeWithDetails = vi.fn(async (reference) => {
+      await writeFile(target, "created during the request");
+      return analyze(reference);
+    });
+    const cli = setup({ service });
+
+    expect(await cli.run("--file", "chair.png", "--live", "--output", "raced.json")).toBe(EXIT_ANALYSIS_FAILED);
+    expect(cli.err.join("\n")).toContain("could not write raced.json");
+    expect(runRecordSchema.safeParse(JSON.parse(cli.out.at(-1) ?? "")).success).toBe(true);
+    expect(await readFile(target, "utf8")).toBe("created during the request");
+  });
+
+  it("keeps the help text and documents the new options", async () => {
+    const cli = setup();
+    expect(await cli.run("--help")).toBe(EXIT_OK);
+    expect(cli.out.join("\n")).toMatch(/--output <file>[\s\S]*never overwrites/);
   });
 });

@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "synthetic-tooling-test",
+  "datasetVersion": "1.0.0",
+  "purpose": "tooling_test",
+  "description": "SYNTHETIC dataset for testing the evaluator. No photographs exist; every annotation, run and review is invented. Never a benchmark.",
+  "baseline": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096
+  },
+  "plannedComposition": {
+    "bed": 1,
+    "chair": 2,
+    "table": 1,
+    "sofa": 1,
+    "ambiguous": 1,
+    "non_furniture": 1
+  },
+  "cases": [
+    {
+      "id": "syn-bed-001",
+      "title": "SYNTHETIC panel bed",
+      "group": "bed",
+      "source": {
+        "kind": "other",
+        "description": "SYNTHETIC fixture: no real photograph exists for this case"
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "a5e32f29846e6c0cc9346cd9e9bc63f3198cdecf65c134490df3a337e7f463c8",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "bed",
+        "acceptableSubtypes": [
+          "panel bed"
+        ],
+        "features": [
+          {
+            "id": "arched-headboard",
+            "description": "Arched headboard panels",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "low-footboard",
+            "description": "Low footboard",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "turned-legs",
+            "description": "Turned legs",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [],
+        "unverifiable": [
+          "Wood species"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species"
+        ]
+      }
+    },
+    {
+      "id": "syn-chair-001",
+      "title": "SYNTHETIC bentwood chair",
+      "group": "chair",
+      "source": {
+        "kind": "other",
+        "description": "SYNTHETIC fixture: no real photograph exists for this case"
+      },
+      "conditions": [
+        "lifestyle_photo",
+        "partial_occlusion"
+      ],
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "chair",
+        "acceptableSubtypes": [
+          "dining chair"
+        ],
+        "features": [
+          {
+            "id": "curved-backrest",
+            "description": "Continuous curved backrest",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "four-legs",
+            "description": "Four splayed legs",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "Rear legs hidden"
+        ],
+        "unverifiable": [
+          "Dimensions"
+        ],
+        "unsupportedClaims": []
+      }
+    },
+    {
+      "id": "syn-table-001",
+      "title": "SYNTHETIC pedestal table",
+      "group": "table",
+      "source": {
+        "kind": "other",
+        "description": "SYNTHETIC fixture: no real photograph exists for this case"
+      },
+      "conditions": [
+        "low_light"
+      ],
+      "annotationStatus": "draft",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "table",
+        "features": []
+      }
+    },
+    {
+      "id": "syn-sofa-001",
+      "title": "SYNTHETIC tufted sofa",
+      "group": "sofa",
+      "source": {
+        "kind": "other",
+        "description": "SYNTHETIC fixture: no real photograph exists for this case"
+      },
+      "conditions": [
+        "unusual_angle"
+      ],
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "sofa",
+        "features": [
+          {
+            "id": "tufted-back",
+            "description": "Deep button-tufted back",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "syn-ambiguous-001",
+      "title": "SYNTHETIC furnished room",
+      "group": "ambiguous",
+      "source": {
+        "kind": "other",
+        "description": "SYNTHETIC fixture: no real photograph exists for this case"
+      },
+      "conditions": [
+        "multiple_objects",
+        "ambiguous_target"
+      ],
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "ambiguous_target",
+        "alsoAcceptableOutcomes": []
+      }
+    },
+    {
+      "id": "syn-landscape-001",
+      "title": "SYNTHETIC landscape",
+      "group": "non_furniture",
+      "source": {
+        "kind": "other",
+        "description": "SYNTHETIC fixture: no real photograph exists for this case"
+      },
+      "conditions": [
+        "non_furniture"
+      ],
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "no_furniture",
+        "alsoAcceptableOutcomes": [
+          "unreadable_image"
+        ]
+      }
+    },
+    {
+      "id": "syn-missing-001",
+      "title": "SYNTHETIC case with no run",
+      "group": "chair",
+      "source": {
+        "kind": "other",
+        "description": "SYNTHETIC fixture: no real photograph exists for this case"
+      },
+      "conditions": [
+        "cropped_furniture"
+      ],
+      "annotationStatus": "draft",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "chair",
+        "features": []
+      }
+    }
+  ]
+}

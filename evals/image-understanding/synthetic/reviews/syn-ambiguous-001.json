@@ -1,0 +1,25 @@
+{
+  "recordType": "image_understanding_review",
+  "schemaVersion": 1,
+  "caseId": "syn-ambiguous-001",
+  "responseId": "resp_synthetic_syn-ambiguous-001",
+  "status": "in_progress",
+  "reviewer": null,
+  "reviewedAt": null,
+  "objectSelection": "not_reviewed",
+  "features": [],
+  "unsupportedAssertions": [],
+  "uncertainty": {
+    "judgement": "not_reviewed"
+  },
+  "searchQueries": {
+    "rating": null,
+    "broadCategoryQueryPresent": null,
+    "distinctiveTermsIncluded": null,
+    "excessivelyNarrow": null,
+    "irrelevantOrFabricatedTerms": null,
+    "exploresAlternatives": null
+  },
+  "failureTags": [],
+  "notes": "SYNTHETIC review for tooling tests."
+}

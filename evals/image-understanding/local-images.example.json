@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "images": {
+    "ettrick-bed": "/path/to/your/copy/of/ettrick.png"
+  }
+}

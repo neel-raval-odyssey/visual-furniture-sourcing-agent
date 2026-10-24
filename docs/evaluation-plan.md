@@ -2,6 +2,36 @@
 
 How we will measure whether the system finds the right furniture. No results exist yet; this document defines the method only.
 
+## Stage 1: Image understanding (implemented tooling, P0-006)
+
+A working API integration doesn't show that the model describes furniture correctly. Before we tune instructions or build on the fingerprints, we measure the current GPT-6 Luna stage on its own. Tooling and the workflow are in [`evals/image-understanding/`](../evals/image-understanding/README.md).
+
+- **Frozen baseline:** model `gpt-6-luna`, instructions `2026-10-24.1`, detail `high`, reasoning `low`, 4096 output tokens. Changing any of them mid-dataset would mix incomparable results, so runs with other settings are excluded and reported.
+- **Dataset:** about 20 photographs the team is entitled to use: 4 beds, 4 chairs, 4 tables, 4 sofas, 2 ambiguous multi-object scenes and 2 non-furniture or unreadable images.
+  - Across the furniture cases, mix studio and lifestyle shots, unusual angles, occlusion, styles and sources.
+  - These are targets, not quotas. Only the Ettrick bed is defined so far, as a provisional case.
+- **Annotations:** written by humans. Each case records the expected outcome; for furniture, also the category, acceptable subtypes, critical and supporting features (flagged if distinctive), known occlusions, unverifiable properties and claims the model must not make. Annotations stay `provisional` until adjudicated.
+- **Layer A, automated (from saved run records):**
+  - Coverage of cases.
+  - Model outcome returned vs. API errors, by type.
+  - Expected-outcome accuracy, excluding errors, with an outcome confusion table.
+  - Category accuracy for furniture cases that identified furniture.
+  - Completeness counts. These measure quantity, not correctness.
+  - Token usage and duration. Reasoning tokens are part of output tokens; cost isn't estimated.
+- **Layer B, human review (against the photograph, judging meaning rather than wording):**
+  - Primary-object selection.
+  - Critical, supporting and distinctive feature coverage (captured, partial, missed or contradicted).
+  - Unsupported assertions.
+  - Uncertainty quality.
+  - Preliminary 1–5 search-query ratings. These are not retrieval results.
+- **Reporting rules:**
+  - Every rate states its denominator. Missing runs and incomplete reviews are listed.
+  - There's no combined score.
+  - Synthetic fixtures are labelled as such, and small samples carry an explicit limitation.
+- **Not used in this phase:** AI-as-judge scoring and automated string matching for visual correctness.
+
+The stages below cover cross-source matching and will be evaluated once discovery and verification are real.
+
 ## What we are evaluating
 
 Cross-source matching: a reference photo from one source (retailer site, Instagram, Pinterest, a room photo) against Alibaba listing images taken by different sellers, with different lighting, angles, backgrounds and colourways.

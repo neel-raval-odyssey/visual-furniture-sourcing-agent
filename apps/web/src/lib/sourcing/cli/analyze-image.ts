@@ -1,6 +1,8 @@
-import { basename, resolve } from "node:path";
+import { access, constants, mkdir, stat, writeFile } from "node:fs/promises";
+import { basename, dirname, extname, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import type { FurnitureFeature, FurnitureFingerprint } from "../domain";
+import { buildRunRecord, type RunOutcome } from "../evaluation/run-record";
 import { formatBytes, ImageInputError, type ReferenceImageContentProvider } from "../image-input/image-content";
 import {
   createLocalReferenceImage,
@@ -35,6 +37,8 @@ export interface AnalyzeImageCliDeps {
   /** Directory relative --file paths are resolved against. */
   cwd: string;
   now?: () => Date;
+  /** Monotonic milliseconds, for request duration. */
+  clock?: () => number;
   /** Only called in --live mode with an API key present. */
   createService?: (
     config: Required<ImageUnderstandingConfig>,
@@ -45,13 +49,17 @@ export interface AnalyzeImageCliDeps {
 export const USAGE = `Analyse one local furniture photograph with the configured OpenAI model.
 
 Usage:
-  pnpm analyze:image --file <path> [--live] [--json]
+  pnpm analyze:image --file <path> [--live] [--json] [--case <id>] [--output <file.json>]
 
 Options:
-  -f, --file <path>  JPEG, PNG or WebP image, at most ${formatBytes(10 * 1024 * 1024)}
-      --live         Send ONE paid request to OpenAI. Without it, nothing is sent (dry run).
-      --json         Print the result as JSON
-  -h, --help         Show this help
+  -f, --file <path>     JPEG, PNG or WebP image, at most ${formatBytes(10 * 1024 * 1024)}
+      --live            Send ONE paid request to OpenAI. Without it, nothing is sent (dry run).
+      --json            Print the result as JSON
+      --case <id>       Evaluation case id to store in the saved record
+      --output <file>   Save an evaluation record (live mode only; never overwrites).
+                        Records hold the fingerprint or the reason there is none,
+                        settings, usage and the image SHA-256, never image bytes or keys.
+  -h, --help            Show this help
 
 Configuration (apps/web/.env.local):
   OPENAI_API_KEY                     required for --live
@@ -66,7 +74,7 @@ const defaultCreateService: NonNullable<AnalyzeImageCliDeps["createService"]> = 
 export async function runAnalyzeImageCli(argv: string[], deps: AnalyzeImageCliDeps): Promise<number> {
   const { io } = deps;
 
-  let args: { file?: string; live?: boolean; json?: boolean; help?: boolean };
+  let args: { file?: string; live?: boolean; json?: boolean; help?: boolean; case?: string; output?: string };
   try {
     // pnpm may forward a literal "--" separator; it carries no meaning here.
     ({ values: args } = parseArgs({
@@ -76,6 +84,8 @@ export async function runAnalyzeImageCli(argv: string[], deps: AnalyzeImageCliDe
         live: { type: "boolean", default: false },
         json: { type: "boolean", default: false },
         help: { type: "boolean", short: "h", default: false },
+        case: { type: "string" },
+        output: { type: "string" },
       },
       strict: true,
       allowPositionals: false,
@@ -94,6 +104,20 @@ export async function runAnalyzeImageCli(argv: string[], deps: AnalyzeImageCliDe
     io.err("Error: --file <path> is required");
     io.err(USAGE);
     return EXIT_USAGE;
+  }
+
+  if (args.case !== undefined && !/^[a-z0-9][a-z0-9-]*$/.test(args.case)) {
+    io.err("Error: --case must use lower-case letters, digits and hyphens");
+    return EXIT_USAGE;
+  }
+
+  const outputPath = args.output === undefined ? undefined : resolve(deps.cwd, args.output);
+  if (outputPath) {
+    const problem = await checkOutputDestination(outputPath);
+    if (problem) {
+      io.err(`Error: cannot save the record to ${args.output}: ${problem}`);
+      return EXIT_USAGE;
+    }
   }
 
   const config = readImageUnderstandingConfig(deps.env);
@@ -124,6 +148,8 @@ export async function runAnalyzeImageCli(argv: string[], deps: AnalyzeImageCliDe
       `                  timeout ${settings.timeoutMs / 1000}s, retries 0, store false, no tools`,
       `Instructions:     version ${FURNITURE_UNDERSTANDING_INSTRUCTIONS_VERSION}`,
       `OPENAI_API_KEY:   ${config.apiKey ? "set" : "NOT SET (required for --live)"}`,
+      ...(args.output ? [`Record:           would be saved to ${args.output} in --live mode (nothing written now)`] : []),
+      ...(args.case ? [`Case id:          ${args.case}`] : []),
       "Run again with --live to send one paid request.",
     ];
     if (args.json) {
@@ -139,6 +165,17 @@ export async function runAnalyzeImageCli(argv: string[], deps: AnalyzeImageCliDe
     return EXIT_USAGE;
   }
 
+  if (outputPath) {
+    // Create the folder before paying for a request, so saving cannot fail on it.
+    try {
+      await mkdir(dirname(outputPath), { recursive: true });
+      await access(dirname(outputPath), constants.W_OK);
+    } catch {
+      io.err(`Error: cannot save the record to ${args.output}: folder cannot be created or written`);
+      return EXIT_USAGE;
+    }
+  }
+
   const images = new InMemoryImageContentProvider();
   images.register(reference.id, content);
   const service = (deps.createService ?? defaultCreateService)(
@@ -146,18 +183,72 @@ export async function runAnalyzeImageCli(argv: string[], deps: AnalyzeImageCliDe
     images,
   );
 
+  const clock = deps.clock ?? (() => performance.now());
+  const started = clock();
+  let outcome: RunOutcome;
   try {
-    const details = await service.analyzeWithDetails(reference);
+    outcome = { ok: true, details: await service.analyzeWithDetails(reference) };
+  } catch (error) {
+    outcome = { ok: false, error };
+  }
+  const durationMs = Math.max(0, Math.round(clock() - started));
+
+  if (outcome.ok) {
+    const { details } = outcome;
     if (args.json) {
       io.out(JSON.stringify({ referenceId: reference.id, responseId: details.responseId, usage: details.usage ?? null, fingerprint: details.fingerprint }, null, 2));
     } else {
       formatAnalysis(details).forEach((line) => io.out(line));
     }
-    return EXIT_OK;
-  } catch (error) {
-    reportFailure(error, io);
+  } else {
+    reportFailure(outcome.error, io);
+  }
+  const exitCode = outcome.ok ? EXIT_OK : EXIT_ANALYSIS_FAILED;
+
+  if (!outputPath) return exitCode;
+
+  const record = buildRunRecord({
+    caseId: args.case ?? null,
+    recordedAt: now().toISOString(),
+    dataSource: outcome.ok ? outcome.details.fingerprint.source.dataSource : "live",
+    image: content,
+    referenceId: reference.id,
+    settings,
+    instructionsVersion: FURNITURE_UNDERSTANDING_INSTRUCTIONS_VERSION,
+    durationMs,
+    outcome,
+  });
+  const json = `${JSON.stringify(record, null, 2)}\n`;
+  try {
+    await writeFile(outputPath, json, { flag: "wx" });
+    io.err(`Saved evaluation record to ${args.output}`);
+    return exitCode;
+  } catch {
+    // Do not lose a paid result: print the record so it can be saved by hand.
+    io.err(`Error: could not write ${args.output}; the record follows on stdout.`);
+    io.out(json);
     return EXIT_ANALYSIS_FAILED;
   }
+}
+
+/** Returns a problem description, or undefined if the destination is usable. */
+async function checkOutputDestination(path: string): Promise<string | undefined> {
+  if (extname(path).toLowerCase() !== ".json") return "the file name must end in .json";
+  try {
+    await stat(path);
+    return "a file or folder already exists there (records are never overwritten)";
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === "ENOTDIR") return "the parent path is not a folder";
+    if (code !== "ENOENT") return "the path cannot be checked";
+  }
+  try {
+    const parent = await stat(dirname(path));
+    if (!parent.isDirectory()) return "the parent path is not a folder";
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") return "the parent folder cannot be checked";
+  }
+  return undefined;
 }
 
 function reportFailure(error: unknown, io: CliIO): void {

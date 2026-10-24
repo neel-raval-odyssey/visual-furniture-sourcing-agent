@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "datasetId": "image-understanding-baseline",
+  "datasetVersion": "1.0.0-draft",
+  "purpose": "benchmark",
+  "description": "Baseline evaluation of GPT-6 Luna image understanding. Only one case is defined so far; the remaining cases are planned (see plannedComposition) and must be added from photographs the team is entitled to use. Annotations are written by humans and are provisional until adjudicated.",
+  "baseline": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096
+  },
+  "plannedComposition": {
+    "bed": 4,
+    "chair": 4,
+    "table": 4,
+    "sofa": 4,
+    "ambiguous": 2,
+    "non_furniture": 2
+  },
+  "cases": [
+    {
+      "id": "ettrick-bed",
+      "title": "Ettrick bed",
+      "group": "bed",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective website collection image (beds/ettrick)",
+        "usageNote": "Image is not committed. Map it locally in evals/local/images.json."
+      },
+      "conditions": ["multiple_objects", "partial_occlusion"],
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "bed",
+        "acceptableSubtypes": ["panel bed"],
+        "features": [
+          {
+            "id": "tall-headboard",
+            "description": "Tall headboard",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "arched-headboard-panels",
+            "description": "Seven narrow vertical headboard panels with rounded arched tops",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "headboard-top-cap",
+            "description": "Projecting horizontal top cap on the headboard",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "low-rectangular-footboard",
+            "description": "Low rectangular footboard",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "short-turned-front-legs",
+            "description": "Short turned front legs",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "dark-reddish-brown-finish",
+            "description": "Dark reddish-brown wood-like finish",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": ["Side rails are obscured"],
+        "unverifiable": ["Wood species and composition (only a wood-like appearance is visible)", "Dimensions"],
+        "unsupportedClaims": ["A specific wood species or solid-wood construction stated as observed", "Specific dimensions"]
+      },
+      "notes": "Provisional reference observations from the developer's review of the first live run (P0-005). Bedside tables and accessories are visible, but the bed is the primary subject. Feature priorities, the photo-style condition tag and imageSha256 still need human confirmation."
+    }
+  ]
+}

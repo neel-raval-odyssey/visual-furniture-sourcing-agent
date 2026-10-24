@@ -1,0 +1,90 @@
+{
+  "recordType": "image_understanding_run",
+  "schemaVersion": 1,
+  "caseId": "syn-bed-001",
+  "recordedAt": "2026-01-01T00:00:00.000Z",
+  "dataSource": "mock",
+  "image": {
+    "sha256": "a5e32f29846e6c0cc9346cd9e9bc63f3198cdecf65c134490df3a337e7f463c8",
+    "mimeType": "image/png",
+    "bytes": 1024
+  },
+  "referenceId": "ref-local-0ef9571d83494cd6",
+  "request": {
+    "model": "gpt-6-luna",
+    "instructionsVersion": "2026-10-24.1",
+    "imageDetail": "high",
+    "reasoningEffort": "low",
+    "maxOutputTokens": 4096,
+    "timeoutMs": 60000
+  },
+  "response": {
+    "responseId": "resp_synthetic_syn-bed-001",
+    "responseModel": "gpt-6-luna",
+    "usage": {
+      "inputTokens": 2000,
+      "outputTokens": 600,
+      "totalTokens": 2600,
+      "reasoningTokens": 50
+    },
+    "durationMs": 4200
+  },
+  "result": {
+    "kind": "furniture_identified",
+    "fingerprint": {
+      "id": "fp-synthetic-syn-bed-001",
+      "referenceImageIds": [
+        "ref-local-0ef9571d83494cd6"
+      ],
+      "category": "bed",
+      "structure": [
+        {
+          "attribute": "headboard_panels",
+          "certainty": "observed",
+          "value": "arched vertical panels"
+        },
+        {
+          "attribute": "footboard",
+          "certainty": "observed",
+          "value": "low rectangular"
+        },
+        {
+          "attribute": "side_rails",
+          "certainty": "unknown",
+          "rationale": "Hidden by bedding"
+        }
+      ],
+      "appearance": [
+        {
+          "attribute": "finish",
+          "certainty": "observed",
+          "value": "dark wood-like"
+        },
+        {
+          "attribute": "wood_species",
+          "certainty": "inferred",
+          "value": "solid oak",
+          "rationale": "Grain visible"
+        }
+      ],
+      "distinctiveFeatures": [
+        {
+          "attribute": "headboard_arches",
+          "certainty": "observed",
+          "value": "repeated rounded arches"
+        }
+      ],
+      "searchQueries": [
+        "arched panel bed",
+        "dark wood panel bed",
+        "arched headboard bed"
+      ],
+      "source": {
+        "kind": "fixture",
+        "dataSource": "mock"
+      },
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "subtype": "panel_bed"
+    }
+  }
+}

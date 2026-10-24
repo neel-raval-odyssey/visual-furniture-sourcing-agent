@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "demo:pipeline": "vitest run --config vitest.demo.config.mts",
-    "analyze:image": "tsx scripts/analyze-image.ts"
+    "analyze:image": "tsx scripts/analyze-image.ts",
+    "eval:images": "tsx scripts/eval-images.ts"
   },
   "dependencies": {
     "next": "16.4.3",
