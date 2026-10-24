@@ -11,6 +11,7 @@
     "build": "pnpm --filter web build",
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm --filter web typecheck",
-    "check": "pnpm lint && pnpm typecheck && pnpm build"
+    "test": "pnpm --filter web test",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }

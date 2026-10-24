@@ -32,7 +32,7 @@ reference photo
 ### 2. Candidate discovery
 
 - An `AlibabaDiscoveryAdapter` interface isolates the source. Implementations will only use a **confirmed, authorized integration** (official API or approved partner). No scraping.
-- A mock/fixture adapter will back development and tests.
+- `MockAlibabaDiscoveryAdapter` (fixture-backed, no network) backs development and tests. See [Code structure](#code-structure).
 - Output: normalized candidate records (listing ID, title, images, price range, MOQ, seller reference, source URL).
 
 ### 3. Visual comparison
@@ -52,6 +52,21 @@ Two stages, to keep cost bounded:
 - Final ranking combines detailed-comparison verdict, embedding similarity and seller signals.
 - Each result shows images, price/MOQ, seller summary, and a short explanation of similarities and differences.
 
+## Code structure
+
+Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
+
+- `domain/`: JSON-serializable, type-only models with no SDK or Next.js dependencies.
+  - `ReferenceImage`: a photograph from any source. Its origin is independent of the marketplace.
+  - `FurnitureFingerprint`: each feature is tagged `observed`, `inferred` or `unknown`.
+  - `CandidateListing`, `SupplierProfile`: optional fields stay absent when unknown. Absent never means negative.
+  - `VisualMatchAssessment`: `designSimilarityIndex` (0–100, not a calibrated probability) is separate from `confidence` (`low | medium | high`). Classifications describe visual design only, not manufacturer or SKU identity.
+  - `RankedSourcingResult`: assessment, supplier and rank are optional, so discovery output can be represented before matching runs.
+- `discovery/`: the `AlibabaDiscoveryAdapter` interface (`discoverCandidates(request) → result`). Discovery returns candidates, suppliers and provenance only. It never scores similarity or ranks results.
+- `discovery/mock/`: `MockAlibabaDiscoveryAdapter` and synthetic fixtures (example.com URLs, `[MOCK]` titles, `dataSource: "mock"`). It applies simple category and text filters, keeps fixture order and makes no network requests.
+
+There is no live Alibaba integration. It is waiting on confirmation of an authorized integration.
+
 ## Components
 
 | Component          | Technology                                     | Status   |
@@ -60,7 +75,7 @@ Two stages, to keep cost bounded:
 | Embedding service  | Python, PyTorch, Hugging Face Transformers     | Planned  |
 | Database           | PostgreSQL (searches, candidates, results)     | Planned  |
 | Object storage     | S3-compatible (reference and candidate images) | Planned  |
-| Alibaba adapter    | Authorized integration, TBD                    | Blocked on confirmation |
+| Alibaba adapter    | Interface + mock implemented; live integration TBD | Live blocked on confirmation |
 
 ## Open decisions
 

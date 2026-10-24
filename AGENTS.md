@@ -17,6 +17,7 @@ Shared project rules for any developer or coding agent working in this repositor
 
 - Package manager: **pnpm** (workspace at repo root). Do not use npm or yarn.
 - Frontend: Next.js (App Router), TypeScript (strict), Tailwind CSS, ESLint — in `apps/web`.
+- Unit tests: Vitest, colocated as `*.test.ts` next to the code under test.
 - Python services live in `services/` and are not part of the pnpm workspace.
 
 ## Before reporting a task done
@@ -24,6 +25,7 @@ Shared project rules for any developer or coding agent working in this repositor
 Run from the repo root and make sure all pass:
 
 ```sh
+pnpm test
 pnpm lint
 pnpm typecheck
 pnpm build
