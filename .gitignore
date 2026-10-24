@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Personal Claude Code configuration
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Python (future services)
+__pycache__/
+*.py[cod]
+.venv/
+
+# misc
+.DS_Store
+*.log
+coverage/

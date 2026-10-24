@@ -1,0 +1,16 @@
+{
+  "name": "visual-furniture-sourcing-agent",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "start": "pnpm --filter web start",
+    "build": "pnpm --filter web build",
+    "lint": "pnpm --filter web lint",
+    "typecheck": "pnpm --filter web typecheck",
+    "check": "pnpm lint && pnpm typecheck && pnpm build"
+  }
+}
