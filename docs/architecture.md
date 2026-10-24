@@ -64,8 +64,38 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
   - `RankedSourcingResult`: assessment, supplier and rank are optional, so discovery output can be represented before matching runs.
 - `discovery/`: the `AlibabaDiscoveryAdapter` interface (`discoverCandidates(request) → result`). Discovery returns candidates, suppliers and provenance only. It never scores similarity or ranks results.
 - `discovery/mock/`: `MockAlibabaDiscoveryAdapter` and synthetic fixtures (example.com URLs, `[MOCK]` titles, `dataSource: "mock"`). It applies simple category and text filters, keeps fixture order and makes no network requests.
+- `understanding/`: `ImageUnderstandingService.analyze(reference) → FurnitureFingerprint`. The mock looks up hand-written fingerprints by reference id. It doesn't read pixels, and it throws `UnsupportedReferenceError` instead of inventing a fingerprint.
+- `verification/`: `VisualVerificationService.verify({ reference, fingerprint, listings }) → VisualMatchAssessment[]`.
+  - It assesses only the listings it is given, at most one assessment per listing. It never searches, enriches suppliers or ranks.
+  - The mock returns predefined assessments marked `metadata.method: "fixture"`. Their similarity values are arbitrary examples, not model output or measurements.
+- `ranking/`: `SourcingRankingService.rank({ listings, suppliers, assessments }) → RankedSourcingResult[]`.
+  - `ProvisionalRankingService` is a placeholder policy for testing orchestration only. Order is by classification (exact, close, similar, insufficient evidence, non-match, unassessed), then similarity (null last), then listing id. There are no weights and no calibration.
+- `pipeline/`: `SourcingPipeline`, the orchestrator.
 
-There is no live Alibaba integration. It is waiting on confirmation of an authorized integration.
+### Sourcing pipeline
+
+```
+ReferenceImage
+  → ImageUnderstandingService.analyze        (stage: image_understanding)
+  → AlibabaDiscoveryAdapter.discoverCandidates (stage: candidate_discovery)
+  → VisualVerificationService.verify          (stage: visual_verification; skipped when there are no candidates)
+  → SourcingRankingService.rank               (stage: ranking)
+  → SourcingPipelineResult { reference, fingerprint, discovery, assessments, results }
+```
+
+- **Dependency injection:** the four services are passed to the constructor as plain interfaces. There's no DI framework. `createSyntheticSourcingPipeline()` wires up the mocks; real integrations will be passed in the same way.
+- **Validation between stages:**
+  - The fingerprint must reference the input image.
+  - Discovery must not return duplicate listing or supplier ids.
+  - Each assessment must refer to a discovered listing, at most once, for the current reference and fingerprint, with similarity in 0–100 or null.
+  - Ranking must return every listing exactly once, with ranks 1..n and correct supplier and assessment links.
+- **Errors:** any stage failure or contract violation is raised as `SourcingPipelineError` with `stage` and the original `cause`. Failures are never replaced with fabricated data.
+- **Empty discovery is not an error.** The run returns empty assessments and results.
+- **Provenance** stays on the stage outputs (`fingerprint.source`, `discovery.provider.dataSource`, listing and supplier `provenance`, assessment `metadata`), so mock output can be told apart from real provider data.
+
+**Implemented vs. planned:** every stage currently runs on synthetic stubs.
+- Planned: GPT-6 Luna (image understanding), an authorized Alibaba integration (discovery), SigLIP 2 and GPT-6.1 Sol (verification), and a production ranking policy.
+- There is no live Alibaba integration. It is waiting on confirmation of an authorized integration.
 
 ## Components
 
@@ -76,6 +106,7 @@ There is no live Alibaba integration. It is waiting on confirmation of an author
 | Database           | PostgreSQL (searches, candidates, results)     | Planned  |
 | Object storage     | S3-compatible (reference and candidate images) | Planned  |
 | Alibaba adapter    | Interface + mock implemented; live integration TBD | Live blocked on confirmation |
+| Sourcing pipeline  | TypeScript orchestrator + synthetic stage stubs | Implemented (stubs only) |
 
 ## Open decisions
 

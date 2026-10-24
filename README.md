@@ -35,6 +35,7 @@ Run from the repository root:
 | `pnpm lint`      | Run ESLint                                  |
 | `pnpm typecheck` | Generate Next.js route types and run `tsc`  |
 | `pnpm test`      | Run unit tests (Vitest)                     |
+| `pnpm demo:pipeline` | Run one synthetic sourcing workflow and print a summary (mock data only) |
 | `pnpm check`     | Lint, typecheck, test and build in sequence |
 
 ## Repository layout

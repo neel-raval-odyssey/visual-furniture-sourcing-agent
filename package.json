@@ -12,6 +12,7 @@
     "lint": "pnpm --filter web lint",
     "typecheck": "pnpm --filter web typecheck",
     "test": "pnpm --filter web test",
+    "demo:pipeline": "pnpm --filter web demo:pipeline",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }
