@@ -26,7 +26,7 @@ reference photo
 ### 1. Image understanding
 
 - Input: a user-supplied photo (product shot, room photo, screenshot, social post).
-- Model (proposed): **GPT-6 Luna**.
+- Model: **GPT-6 Luna** (implemented; see [Real image understanding](#real-image-understanding-gpt-6-luna)).
 - Output: furniture category, key visual attributes (silhouette, materials, colour, legs/base, upholstery, proportions), style tags, and several search queries. If the photo contains several items, identify the target item (possibly with a crop).
 
 ### 2. Candidate discovery
@@ -64,7 +64,8 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
   - `RankedSourcingResult`: assessment, supplier and rank are optional, so discovery output can be represented before matching runs.
 - `discovery/`: the `AlibabaDiscoveryAdapter` interface (`discoverCandidates(request) → result`). Discovery returns candidates, suppliers and provenance only. It never scores similarity or ranks results.
 - `discovery/mock/`: `MockAlibabaDiscoveryAdapter` and synthetic fixtures (example.com URLs, `[MOCK]` titles, `dataSource: "mock"`). It applies simple category and text filters, keeps fixture order and makes no network requests.
-- `understanding/`: `ImageUnderstandingService.analyze(reference) → FurnitureFingerprint`. The mock looks up hand-written fingerprints by reference id. It doesn't read pixels, and it throws `UnsupportedReferenceError` instead of inventing a fingerprint.
+- `understanding/`: `ImageUnderstandingService.analyze(reference) → FurnitureFingerprint`. The mock looks up hand-written fingerprints by reference id. It doesn't read pixels, and it throws `UnsupportedReferenceError` instead of inventing a fingerprint. `understanding/openai/` holds the real implementation (below).
+- `image-input/`: `ReferenceImageContentProvider` resolves a reference's bytes (JPEG, PNG or WebP, at most 10 MB, format checked by file signature). It's independent of the model client. The local CLI uses a file reader and an in-memory provider; uploads and storage will plug in here later.
 - `verification/`: `VisualVerificationService.verify({ reference, fingerprint, listings }) → VisualMatchAssessment[]`.
   - It assesses only the listings it is given, at most one assessment per listing. It never searches, enriches suppliers or ranks.
   - The mock returns predefined assessments marked `metadata.method: "fixture"`. Their similarity values are arbitrary examples, not model output or measurements.
@@ -105,9 +106,44 @@ ReferenceImage
   - The service or adapter that produces the output sets these fields. They must never be copied from a model's or provider's raw response.
   - Today every stage reports `mock`, and `summarizeSourcingRun` flags the run as synthetic if any of these fields is `mock`.
 
-**Implemented vs. planned:** every stage currently runs on synthetic stubs.
+### Real image understanding (GPT-6 Luna)
+
+`OpenAIImageUnderstandingService` implements `ImageUnderstandingService`:
+
+```
+ReferenceImage → ReferenceImageContentProvider.load → ImageContent (bytes, MIME)
+  → OpenAIVisionClient.analyzeImage  (one Responses API call, Structured Outputs)
+  → raw vision response   (untrusted; validated by rawVisionAnalysisSchema)
+  → mapRawAnalysisToFingerprint  (+ application-owned id, reference, createdAt, provenance)
+  → furnitureFingerprintSchema   (existing P0-004 validation)
+```
+
+- **Request:**
+  - Model from `OPENAI_IMAGE_UNDERSTANDING_MODEL` (default `gpt-6-luna`).
+  - Instructions from `understanding/openai/instructions.ts`. The image goes as a base64 data URL with `detail: "high"`.
+  - Reasoning `low`, `max_output_tokens` 4096, 60 s timeout, `store: false`, no tools.
+  - `maxRetries: 0` on both the client and the request, so one call is at most one paid request.
+- **Raw response vs. fingerprint:**
+  - The model fills a separate raw schema: an `outcome` (`furniture_identified | no_furniture | ambiguous_target | unreadable_image`), a short reason, and a nullable `furniture` object (category, subtype, structure, appearance, distinctive features, search queries).
+  - Every feature has a certainty, and its value is `null` when the certainty is `unknown`.
+  - The schema stays within the Structured Outputs subset: a root object, all fields required, `null` for absence, strict objects, and no refinements or string length limits.
+  - It asks for **no** ids, timestamps, model ids or provenance.
+- **Mapping** sets the trusted fields itself:
+  - `referenceImageIds: [reference.id]`, a generated fingerprint id and `createdAt`.
+  - `source = { kind: "model", dataSource: "live", modelId }`, where `modelId` is the model reported in the API response.
+  - It normalises names to snake_case and trims, de-duplicates and caps search queries at 5.
+  - Non-furniture outcomes raise `FurnitureNotIdentifiedError`. Inconsistent output (e.g. an unknown feature with a value, an observed feature without one) raises `VisionModelError("malformed_output")`. Nothing is invented to fill gaps.
+- **Errors:** `VisionModelError.category` is one of `refusal`, `incomplete`, `missing_output`, `malformed_output`, `authentication`, `permission`, `model_not_found`, `bad_request`, `rate_limit`, `timeout`, `network`, `server_error` or `unexpected`.
+  - Messages never include the image, the key or full payloads, and the request id is kept.
+  - Failures are never replaced with mock output. Inside `SourcingPipeline`, they surface as `image_understanding` stage errors.
+- **CLI:** `pnpm analyze:image --file <path>` is a dry run by default (no network). `--live` sends one request. Secrets are read from `apps/web/.env.local` via `@next/env`.
+
+**Implemented vs. planned:**
+- Image understanding has a real provider implementation, run locally through the CLI. The pipeline still wires the mock by default.
+- Discovery and visual verification are synthetic stubs, and ranking is provisional.
+- There is no live end-to-end Alibaba sourcing workflow yet.
 - Each real integration will also need an adapter that maps raw model or provider output into the domain types, setting provenance itself, before the pipeline's validation runs.
-- Planned: GPT-6 Luna (image understanding), an authorized Alibaba integration (discovery), SigLIP 2 and GPT-6.1 Sol (verification), and a production ranking policy.
+- Planned: an authorized Alibaba integration (discovery), SigLIP 2 and GPT-6.1 Sol (verification), and a production ranking policy.
 - There is no live Alibaba integration. It is waiting on confirmation of an authorized integration.
 
 ## Components
@@ -120,6 +156,7 @@ ReferenceImage
 | Object storage     | S3-compatible (reference and candidate images) | Planned  |
 | Alibaba adapter    | Interface + mock implemented; live integration TBD | Live blocked on confirmation |
 | Sourcing pipeline  | TypeScript orchestrator + synthetic stage stubs | Implemented (stubs only) |
+| Image understanding | OpenAI Responses API (GPT-6 Luna), local CLI | Implemented; first live run pending |
 
 ## Open decisions
 
