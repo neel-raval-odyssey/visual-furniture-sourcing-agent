@@ -71,6 +71,10 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
 - `ranking/`: `SourcingRankingService.rank({ listings, suppliers, assessments }) → RankedSourcingResult[]`.
   - `ProvisionalRankingService` is a placeholder policy for testing orchestration only. Order is by classification (exact, close, similar, insufficient evidence, non-match, unassessed), then similarity (null last), then listing id. There are no weights and no calibration.
 - `pipeline/`: `SourcingPipeline`, the orchestrator.
+- `validation/`: Zod 4 runtime schemas that mirror the domain contracts.
+  - Each schema has a compile-time `SchemaMatches` check against its interface, so `pnpm typecheck` fails if the two drift apart.
+  - Objects are strict: unknown keys are rejected, not stripped. The only open-ended field is `CandidateListing.attributes`, a string record that keeps every key.
+  - Nothing is coerced or defaulted, so missing optional data stays missing.
 
 ### Sourcing pipeline
 
@@ -84,16 +88,25 @@ ReferenceImage
 ```
 
 - **Dependency injection:** the four services are passed to the constructor as plain interfaces. There's no DI framework. `createSyntheticSourcingPipeline()` wires up the mocks; real integrations will be passed in the same way.
-- **Validation between stages:**
-  - The fingerprint must reference the input image.
-  - Discovery must not return duplicate listing or supplier ids.
-  - Each assessment must refer to a discovered listing, at most once, for the current reference and fingerprint, with similarity in 0–100 or null.
-  - Ranking must return every listing exactly once, with ranks 1..n and correct supplier and assessment links.
-- **Errors:** any stage failure or contract violation is raised as `SourcingPipelineError` with `stage` and the original `cause`. Failures are never replaced with fabricated data.
+- **Validation between stages** has two layers, in this order:
+  1. *Structural:* each stage's raw output is parsed with its schema (fingerprint, discovery result, assessment array, ranked-result array). This catches wrong types, missing fields, invalid enums, similarity outside 0–100 and malformed timestamps or URLs.
+  2. *Integrity:* checks that the data belongs to this run:
+     - The fingerprint must reference the input image.
+     - Discovery must not return duplicate listing or supplier ids.
+     - Each assessment must refer to a discovered listing, at most once, for the current reference and fingerprint, with similarity in 0–100 or null.
+     - Ranking must return every listing exactly once, with ranks 1..n and correct supplier and assessment links.
+- **Errors:** any stage failure or contract violation is raised as `SourcingPipelineError` with `stage` and the original `cause`; for schema failures the cause is the `ZodError`. The message lists field paths and issue codes only, never payload values. Failures are never replaced with fabricated data.
 - **Empty discovery is not an error.** The run returns empty assessments and results.
-- **Provenance** stays on the stage outputs (`fingerprint.source`, `discovery.provider.dataSource`, listing and supplier `provenance`, assessment `metadata`), so mock output can be told apart from real provider data.
+- **Provenance** records two separate things, both typed: the *data source* (`DataSourceKind`: `mock` or `live`) and the *method or provider*:
+  - Fingerprints: `source.dataSource` + `source.kind` / `modelId`.
+  - Discovery: `provider.dataSource` + `providerId`.
+  - Listings and suppliers: `provenance.dataSource` + `marketplace`.
+  - Assessments: required `metadata.dataSource` + `method` / `modelId`.
+  - The service or adapter that produces the output sets these fields. They must never be copied from a model's or provider's raw response.
+  - Today every stage reports `mock`, and `summarizeSourcingRun` flags the run as synthetic if any of these fields is `mock`.
 
 **Implemented vs. planned:** every stage currently runs on synthetic stubs.
+- Each real integration will also need an adapter that maps raw model or provider output into the domain types, setting provenance itself, before the pipeline's validation runs.
 - Planned: GPT-6 Luna (image understanding), an authorized Alibaba integration (discovery), SigLIP 2 and GPT-6.1 Sol (verification), and a production ranking policy.
 - There is no live Alibaba integration. It is waiting on confirmation of an authorized integration.
 

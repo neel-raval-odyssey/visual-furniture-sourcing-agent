@@ -44,6 +44,7 @@ function assessment(
     differences: [],
     unverifiableFeatures: [],
     assessedAt: "2026-01-01T00:00:00.000Z",
+    metadata: { dataSource: "mock", method: "fixture" },
   };
 }
 

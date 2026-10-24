@@ -9,6 +9,7 @@ import type { AssessmentMetadata, VisualMatchAssessment } from "../../domain";
  */
 
 export const SYNTHETIC_ASSESSMENT_METADATA: AssessmentMetadata = {
+  dataSource: "mock",
   method: "fixture",
   notes:
     "Synthetic assessment with a predefined example value. Not model-generated; not a measurement.",

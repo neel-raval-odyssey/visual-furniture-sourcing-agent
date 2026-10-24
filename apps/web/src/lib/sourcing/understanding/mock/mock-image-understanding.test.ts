@@ -36,7 +36,7 @@ describe("MockImageUnderstandingService", () => {
     );
 
     expect(certainties).toEqual(new Set(["observed", "inferred", "unknown"]));
-    expect(fp.source).toEqual({ kind: "fixture" });
+    expect(fp.source).toEqual({ kind: "fixture", dataSource: "mock" });
   });
 
   it("rejects an unsupported reference instead of inventing a fingerprint", async () => {

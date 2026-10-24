@@ -74,7 +74,7 @@ const chairFingerprint: FurnitureFingerprint = {
   appearance: [],
   distinctiveFeatures: [],
   searchQueries: ["dining chair"],
-  source: { kind: "fixture" },
+  source: { kind: "fixture", dataSource: "mock" },
   createdAt: "2026-10-24T09:01:00.000Z",
 };
 

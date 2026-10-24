@@ -1,4 +1,4 @@
-import type { IsoTimestamp } from "./common";
+import type { DataSourceKind, IsoTimestamp } from "./common";
 
 /**
  * How much we know about a feature:
@@ -28,9 +28,15 @@ export interface UnknownFeature extends FeatureBase {
 
 export type FurnitureFeature = KnownFeature | UnknownFeature;
 
-/** Who or what produced a fingerprint. */
+/**
+ * Who or what produced a fingerprint. `kind` is the generation method;
+ * `dataSource` says whether the output is synthetic ("mock") or came from a
+ * real service ("live"). Both are set by the service implementation, never
+ * copied from a model's raw response.
+ */
 export interface FingerprintSource {
   kind: "manual" | "model" | "fixture";
+  dataSource: DataSourceKind;
   /** Model identifier when kind is "model". */
   modelId?: string;
 }

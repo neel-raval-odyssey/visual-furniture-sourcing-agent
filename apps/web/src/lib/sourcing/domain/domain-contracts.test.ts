@@ -49,7 +49,7 @@ const fingerprint = {
     { attribute: "backrest", value: "steam-bent slats", certainty: "observed" },
   ],
   searchQueries: ["curved back dining chair"],
-  source: { kind: "fixture" },
+  source: { kind: "fixture", dataSource: "mock" },
   createdAt: "2026-10-24T09:01:00.000Z",
 } satisfies FurnitureFingerprint;
 
@@ -156,6 +156,7 @@ describe("VisualMatchAssessment", () => {
       differences: [],
       unverifiableFeatures: ["wood_species"],
       assessedAt: "2026-10-24T09:03:00.000Z",
+      metadata: { dataSource: "mock", method: "fixture" },
     };
     expect(assessment.designSimilarityIndex).toBe(90);
     expect(assessment.confidence).toBe("low");

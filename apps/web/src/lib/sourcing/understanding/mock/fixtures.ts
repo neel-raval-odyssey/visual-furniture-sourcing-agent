@@ -69,7 +69,7 @@ export const MOCK_FINGERPRINTS: readonly FurnitureFingerprint[] = [
       { attribute: "backrest", value: "single curved panel", certainty: "observed" },
     ],
     searchQueries: ["dining chair", "lounge chair"],
-    source: { kind: "fixture" },
+    source: { kind: "fixture", dataSource: "mock" },
     createdAt: FIXTURE_CREATED_AT,
   },
   {
@@ -99,7 +99,7 @@ export const MOCK_FINGERPRINTS: readonly FurnitureFingerprint[] = [
       { attribute: "pedestal", value: "flared trumpet base", certainty: "observed" },
     ],
     searchQueries: ["dining table", "coffee table"],
-    source: { kind: "fixture" },
+    source: { kind: "fixture", dataSource: "mock" },
     createdAt: FIXTURE_CREATED_AT,
   },
   {
@@ -113,7 +113,7 @@ export const MOCK_FINGERPRINTS: readonly FurnitureFingerprint[] = [
     ],
     distinctiveFeatures: [],
     searchQueries: ["canopy bed"],
-    source: { kind: "fixture" },
+    source: { kind: "fixture", dataSource: "mock" },
     createdAt: FIXTURE_CREATED_AT,
   },
 ];

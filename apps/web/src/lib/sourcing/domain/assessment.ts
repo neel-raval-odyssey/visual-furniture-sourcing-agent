@@ -1,4 +1,4 @@
-import type { IsoTimestamp } from "./common";
+import type { DataSourceKind, IsoTimestamp } from "./common";
 
 /**
  * Visual design match category. These describe design similarity only.
@@ -23,7 +23,14 @@ export interface FeatureEvidence {
   listingImageUri?: string;
 }
 
+/**
+ * Provenance of an assessment. `dataSource` says whether it is synthetic
+ * ("mock") or produced by a real verification service ("live"); `method` and
+ * `modelId` record how it was produced. Set by the service implementation,
+ * never copied from a model's raw response.
+ */
 export interface AssessmentMetadata {
+  dataSource: DataSourceKind;
   /** e.g. "embedding", "multimodal_model", "manual", "fixture". */
   method: string;
   modelId?: string;
@@ -52,5 +59,5 @@ export interface VisualMatchAssessment {
   /** Features that are obscured or cannot be verified from the images. */
   unverifiableFeatures: string[];
   assessedAt: IsoTimestamp;
-  metadata?: AssessmentMetadata;
+  metadata: AssessmentMetadata;
 }

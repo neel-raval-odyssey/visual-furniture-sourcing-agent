@@ -28,15 +28,33 @@ describe("summarizeSourcingRun", () => {
     const run = await createSyntheticSourcingPipeline({ now: FIXED_NOW }).run({
       reference: MOCK_REFERENCE_IMAGES.table,
     });
+    const live = { ...run.discovery.provider, dataSource: "live" as const };
+    const liveListings = run.discovery.listings.map((l) => ({
+      ...l,
+      provenance: { ...l.provenance, dataSource: "live" as const },
+    }));
     const liveLike: SourcingPipelineResult = {
       ...run,
-      fingerprint: { ...run.fingerprint, source: { kind: "model", modelId: "example" } },
-      discovery: { ...run.discovery, provider: { ...run.discovery.provider, dataSource: "live" } },
-      assessments: run.assessments.map((a) => ({ ...a, metadata: { method: "multimodal_model" } })),
+      fingerprint: { ...run.fingerprint, source: { kind: "model", dataSource: "live", modelId: "example" } },
+      discovery: {
+        ...run.discovery,
+        provider: live,
+        listings: liveListings,
+        suppliers: run.discovery.suppliers.map((s) => ({
+          ...s,
+          provenance: { ...s.provenance, dataSource: "live" as const },
+        })),
+      },
+      assessments: run.assessments.map((a) => ({ ...a, metadata: { dataSource: "live", method: "multimodal_model", modelId: "example" } })),
+    };
+    const oneMockListing: SourcingPipelineResult = {
+      ...liveLike,
+      discovery: { ...liveLike.discovery, listings: [run.discovery.listings[0], ...liveListings.slice(1)] },
     };
 
     expect(summarizeSourcingRun(run).containsSyntheticData).toBe(true);
     expect(summarizeSourcingRun(liveLike).containsSyntheticData).toBe(false);
+    expect(summarizeSourcingRun(oneMockListing).containsSyntheticData).toBe(true);
   });
 
   it("reports unassessed results without inventing values", async () => {

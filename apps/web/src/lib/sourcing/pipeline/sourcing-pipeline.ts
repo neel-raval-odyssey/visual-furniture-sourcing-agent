@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type {
   CandidateListing,
   FurnitureFingerprint,
@@ -13,9 +14,17 @@ import type {
 import type { SourcingRankingService } from "../ranking/types";
 import type { ImageUnderstandingService } from "../understanding/types";
 import type { VisualVerificationService } from "../verification/types";
+import { visualMatchAssessmentSchema } from "../validation/assessment";
+import { discoverySearchResultSchema } from "../validation/discovery";
+import { furnitureFingerprintSchema } from "../validation/fingerprint";
+import { summarizeIssues } from "../validation/issues";
+import { rankedSourcingResultSchema } from "../validation/result";
 import { SourcingPipelineError, type PipelineStage } from "./errors";
 
 export const DEFAULT_CANDIDATE_LIMIT = 20;
+
+const assessmentsSchema = z.array(visualMatchAssessmentSchema);
+const rankedResultsSchema = z.array(rankedSourcingResultSchema);
 
 export interface SourcingPipelineDependencies {
   imageUnderstanding: ImageUnderstandingService;
@@ -50,10 +59,14 @@ export interface SourcingPipelineResult {
 
 /**
  * Runs image understanding → discovery → visual verification → ranking with
- * injected services. Each stage's output is checked against its contract
- * before the next stage runs; any failure is raised as a
- * SourcingPipelineError naming the stage. No stage output is ever replaced
- * with fabricated data.
+ * injected services. Each stage's output passes two checks before the next
+ * stage runs:
+ *   1. structural validation against its runtime schema (is the data
+ *      well-formed?), then
+ *   2. integrity checks (does it belong to this run: ids, associations,
+ *      coverage?).
+ * Any failure is raised as a SourcingPipelineError naming the stage. No stage
+ * output is ever repaired or replaced with fabricated data.
  *
  * An empty discovery result is not an error: verification is skipped (there
  * is nothing to assess) and the run returns empty assessments and results.
@@ -64,8 +77,12 @@ export class SourcingPipeline {
   async run(input: SourcingPipelineInput): Promise<SourcingPipelineResult> {
     const reference = structuredClone(input.reference);
 
-    const fingerprint = await runStage("image_understanding", () =>
-      this.deps.imageUnderstanding.analyze(structuredClone(reference)),
+    const fingerprint = parseStageOutput(
+      "image_understanding",
+      furnitureFingerprintSchema,
+      await runStage("image_understanding", () =>
+        this.deps.imageUnderstanding.analyze(structuredClone(reference)),
+      ),
     );
     if (!fingerprint.referenceImageIds.includes(reference.id)) {
       throw new SourcingPipelineError(
@@ -74,36 +91,48 @@ export class SourcingPipeline {
       );
     }
 
-    const discovery = await runStage("candidate_discovery", () =>
-      this.deps.discovery.discoverCandidates({
-        reference: structuredClone(reference),
-        fingerprint: structuredClone(fingerprint),
-        mode: input.discovery?.mode ?? "image_and_text",
-        limit: input.discovery?.limit ?? DEFAULT_CANDIDATE_LIMIT,
-      }),
+    const discovery = parseStageOutput(
+      "candidate_discovery",
+      discoverySearchResultSchema,
+      await runStage("candidate_discovery", () =>
+        this.deps.discovery.discoverCandidates({
+          reference: structuredClone(reference),
+          fingerprint: structuredClone(fingerprint),
+          mode: input.discovery?.mode ?? "image_and_text",
+          limit: input.discovery?.limit ?? DEFAULT_CANDIDATE_LIMIT,
+        }),
+      ),
     );
-    validateDiscovery(discovery);
+    checkDiscoveryIntegrity(discovery);
 
     const assessments =
       discovery.listings.length === 0
         ? []
-        : await runStage("visual_verification", () =>
-            this.deps.visualVerification.verify({
-              reference: structuredClone(reference),
-              fingerprint: structuredClone(fingerprint),
-              listings: structuredClone(discovery.listings),
-            }),
+        : parseStageOutput(
+            "visual_verification",
+            assessmentsSchema,
+            await runStage("visual_verification", () =>
+              this.deps.visualVerification.verify({
+                reference: structuredClone(reference),
+                fingerprint: structuredClone(fingerprint),
+                listings: structuredClone(discovery.listings),
+              }),
+            ),
           );
-    validateAssessments(assessments, discovery.listings, reference, fingerprint);
+    checkAssessmentIntegrity(assessments, discovery.listings, reference, fingerprint);
 
-    const results = await runStage("ranking", () =>
-      this.deps.ranking.rank({
-        listings: structuredClone(discovery.listings),
-        suppliers: structuredClone(discovery.suppliers),
-        assessments: structuredClone(assessments),
-      }),
+    const results = parseStageOutput(
+      "ranking",
+      rankedResultsSchema,
+      await runStage("ranking", () =>
+        this.deps.ranking.rank({
+          listings: structuredClone(discovery.listings),
+          suppliers: structuredClone(discovery.suppliers),
+          assessments: structuredClone(assessments),
+        }),
+      ),
     );
-    validateResults(results, discovery.listings);
+    checkResultIntegrity(results, discovery.listings);
 
     return { reference, fingerprint, discovery, assessments, results };
   }
@@ -118,6 +147,27 @@ async function runStage<T>(stage: PipelineStage, fn: () => Promise<T>): Promise<
   }
 }
 
+/**
+ * Structural validation of a stage's runtime output. Returns the parsed copy;
+ * nothing is coerced or defaulted. The ZodError is kept as `cause`, and the
+ * message lists field paths and issue codes only, never the payload.
+ */
+function parseStageOutput<S extends z.ZodType>(
+  stage: PipelineStage,
+  schema: S,
+  value: unknown,
+): z.output<S> {
+  const parsed = schema.safeParse(value);
+  if (!parsed.success) {
+    throw new SourcingPipelineError(
+      stage,
+      `Output failed validation: ${summarizeIssues(parsed.error)}`,
+      { cause: parsed.error },
+    );
+  }
+  return parsed.data;
+}
+
 function findDuplicate(ids: string[]): string | undefined {
   const seen = new Set<string>();
   for (const id of ids) {
@@ -127,7 +177,7 @@ function findDuplicate(ids: string[]): string | undefined {
   return undefined;
 }
 
-function validateDiscovery(discovery: DiscoverySearchResult): void {
+function checkDiscoveryIntegrity(discovery: DiscoverySearchResult): void {
   const fail = (message: string) => {
     throw new SourcingPipelineError("candidate_discovery", message);
   };
@@ -138,7 +188,7 @@ function validateDiscovery(discovery: DiscoverySearchResult): void {
   if (duplicateSupplier) fail(`Duplicate supplier id "${duplicateSupplier}"`);
 }
 
-function validateAssessments(
+function checkAssessmentIntegrity(
   assessments: VisualMatchAssessment[],
   listings: CandidateListing[],
   reference: ReferenceImage,
@@ -172,7 +222,7 @@ function validateAssessments(
   }
 }
 
-function validateResults(
+function checkResultIntegrity(
   results: RankedSourcingResult[],
   listings: CandidateListing[],
 ): void {
