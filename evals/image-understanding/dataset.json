@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "datasetId": "image-understanding-baseline",
-  "datasetVersion": "1.0.0-draft",
+  "datasetVersion": "1.2.0-draft",
   "purpose": "benchmark",
-  "description": "Baseline evaluation of GPT-6 Luna image understanding. Only one case is defined so far; the remaining cases are planned (see plannedComposition) and must be added from photographs the team is entitled to use. Annotations are written by humans and are provisional until adjudicated.",
+  "description": "Ten-image furniture-understanding benchmark with one photograph from each distinct furniture collection. The studio folder was excluded because its images duplicate other collections. Ettrick annotations were retrospective; subsequent cases were annotated before model inference. All annotations remain provisional until adjudicated.",
   "baseline": {
     "model": "gpt-6-luna",
     "instructionsVersion": "2026-10-24.1",
@@ -12,12 +12,16 @@
     "maxOutputTokens": 4096
   },
   "plannedComposition": {
-    "bed": 4,
-    "chair": 4,
-    "table": 4,
-    "sofa": 4,
-    "ambiguous": 2,
-    "non_furniture": 2
+    "bed": 1,
+    "chair": 1,
+    "coffee_table": 1,
+    "day_bed": 1,
+    "dining": 1,
+    "side_table": 1,
+    "sofa_1_seater": 1,
+    "sofa_3_seater": 1,
+    "stool": 1,
+    "study_table": 1
   },
   "cases": [
     {
@@ -29,12 +33,17 @@
         "description": "The Furniture Collective website collection image (beds/ettrick)",
         "usageNote": "Image is not committed. Map it locally in evals/local/images.json."
       },
-      "conditions": ["multiple_objects", "partial_occlusion"],
+      "conditions": [
+        "multiple_objects",
+        "partial_occlusion"
+      ],
       "annotationStatus": "provisional",
       "expected": {
         "outcome": "furniture_identified",
         "category": "bed",
-        "acceptableSubtypes": ["panel bed"],
+        "acceptableSubtypes": [
+          "panel bed"
+        ],
         "features": [
           {
             "id": "tall-headboard",
@@ -79,11 +88,946 @@
             "distinctive": false
           }
         ],
-        "knownOcclusions": ["Side rails are obscured"],
-        "unverifiable": ["Wood species and composition (only a wood-like appearance is visible)", "Dimensions"],
-        "unsupportedClaims": ["A specific wood species or solid-wood construction stated as observed", "Specific dimensions"]
+        "knownOcclusions": [
+          "Side rails are obscured"
+        ],
+        "unverifiable": [
+          "Wood species and composition (only a wood-like appearance is visible)",
+          "Dimensions"
+        ],
+        "unsupportedClaims": [
+          "A specific wood species or solid-wood construction stated as observed",
+          "Specific dimensions"
+        ]
       },
-      "notes": "Provisional reference observations from the developer's review of the first live run (P0-005). Bedside tables and accessories are visible, but the bed is the primary subject. Feature priorities, the photo-style condition tag and imageSha256 still need human confirmation."
+      "notes": "The bed is the primary object despite two bedside tables. Image hash verified against the reference photograph. Reference annotations remain provisional pending final dataset adjudication.",
+      "imageSha256": "ea09c47eba6a97da2e909eb13ae16ada544f438a80abb4976682e196055afaba"
+    },
+    {
+      "id": "aisha-chair",
+      "title": "Aisha chair",
+      "group": "chair",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (chairs/aisha)",
+        "usageNote": "Image stays outside repository; local path is private."
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "ea1b0b0007809d8d5e0a994eecf68576bdd378d8f242b80b34e5931d6f016153",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "chair",
+        "acceptableSubtypes": [
+          "dining chair",
+          "side chair"
+        ],
+        "features": [
+          {
+            "id": "central-back-splat",
+            "description": "Single broad, shaped central vertical backrest splat",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "open-back-geometry",
+            "description": "Rounded top rail and side uprights with two elongated openings around the central splat",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "tan-upholstered-seat",
+            "description": "Tan or caramel padded seat with rounded corners",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "slender-tapered-legs",
+            "description": "Four slender tapering chair legs",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "dark-woodlike-frame",
+            "description": "Dark brown wood-like frame with visible grain",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "armless-design",
+            "description": "Armless chair design",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "seat-apron",
+            "description": "Visible wooden-looking apron beneath the upholstered seat",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "Underside and some rear joinery are not visible"
+        ],
+        "unverifiable": [
+          "Exact wood species and solid-wood construction",
+          "Genuine versus synthetic leather upholstery",
+          "Exact dimensions and weight"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species claimed as observed",
+          "Genuine leather claimed as observed",
+          "Exact dimensions or manufacturer identity"
+        ]
+      },
+      "notes": "Independent pre-model visual annotations. Single chair on a neutral background. Pending human approval before adjudication."
+    },
+    {
+      "id": "amber-coffee-table",
+      "title": "Amber Coffee Table",
+      "group": "coffee_table",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (coffee-tables/amber)",
+        "usageNote": "Reference image remains outside the repository. Its local path is stored privately."
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "8b6d088ffa3070ee3a4dc683967530abb4a624ad95426c083c44159c224d9c48",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "table",
+        "alsoAcceptableCategories": [
+          "coffee_table"
+        ],
+        "acceptableSubtypes": [
+          "coffee table",
+          "round coffee table",
+          "low round coffee table"
+        ],
+        "features": [
+          {
+            "id": "circular-tabletop",
+            "description": "Broad, flat circular tabletop",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "vertical-ribbed-perimeter",
+            "description": "Many closely spaced, vertically oriented curved ribs or flutes wrapping around the circular outer perimeter",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "recessed-circular-pedestal",
+            "description": "Smaller-diameter cylindrical pedestal base recessed beneath the broad upper body",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "rounded-drum-profile",
+            "description": "Low, thick, rounded drum-like upper body",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "ribbed-grooves",
+            "description": "Narrow dark grooves or gaps between repeated vertical ribs",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "amber-brown-finish",
+            "description": "Warm amber-brown wood-like finish with visible grain or tonal variation",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "no-separate-legs",
+            "description": "No distinct four-leg construction; the table is supported by a central pedestal",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "The underside and internal pedestal connections are not visible"
+        ],
+        "unverifiable": [
+          "Exact wood species and whether material is solid wood, veneer, or wood-like composite",
+          "Whether the vertical ribs are separate components",
+          "Internal support construction",
+          "Exact dimensions and weight"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species claimed as directly observed",
+          "Solid wood construction claimed as verified",
+          "Exact dimensions or weight",
+          "Specific manufacturing or assembly method",
+          "Manufacturer or brand identity inferred from appearance"
+        ]
+      },
+      "notes": "Independent pre-model visual annotations. Single circular ribbed coffee table on a neutral background. Awaiting human review and adjudication."
+    },
+    {
+      "id": "ashford-day-bed",
+      "title": "Ashford Day Bed",
+      "group": "day_bed",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (day-beds/ashford_cleaned)",
+        "usageNote": "Image remains outside the repository. Local file path is stored privately."
+      },
+      "conditions": [
+        "clean_product_photo",
+        "partial_occlusion"
+      ],
+      "imageSha256": "27fea2e410a0c9f69a6f025fcf46b1876c5e80c868448d753c4ae717742e3661",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "day_bed",
+        "alsoAcceptableCategories": [
+          "daybed",
+          "chaise_lounge",
+          "chaise_longue"
+        ],
+        "acceptableSubtypes": [
+          "daybed",
+          "chaise lounge",
+          "chaise longue",
+          "one-arm chaise",
+          "upholstered daybed"
+        ],
+        "features": [
+          {
+            "id": "elongated-reclining-platform",
+            "description": "Long, low rectangular upholstered lounging platform extending toward image-left",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "raised-right-end-support",
+            "description": "Tall rectangular upholstered arm or end support on image-right, with opposite end open",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "partial-rear-backrest",
+            "description": "Short horizontal upholstered backrest along part of the rear, adjoining the raised right-end support",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "stitched-seat-panels",
+            "description": "Subtle stitched seams divide the long seat surface into padded panels",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "cognac-upholstery",
+            "description": "Warm cognac or caramel-brown leather-like upholstery with a smooth finish",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "box-shaped-base",
+            "description": "Thick low rectangular upholstered base beneath the long upper cushion",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "exposed-tapered-legs",
+            "description": "Short exposed, tapered brown wooden-looking legs supporting the upholstered base",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "Loose cushions obscure part of the right-end backrest and arm connection",
+          "Underside and rear joinery are not visible"
+        ],
+        "unverifiable": [
+          "Whether upholstery is genuine or synthetic leather",
+          "Internal frame and cushion construction",
+          "Exact wood species of the visible legs",
+          "Exact dimensions and weight",
+          "Whether the cylindrical bolster is permanently attached or removable"
+        ],
+        "unsupportedClaims": [
+          "Genuine leather asserted as verified",
+          "Specific frame material asserted as observed",
+          "Exact dimensions or weight",
+          "Specific manufacturing or joinery methods",
+          "Manufacturer or brand identity inferred from visual appearance"
+        ]
+      },
+      "notes": "Independent pre-model annotations. Asymmetric upholstered daybed or chaise with an open left end, raised right-end support and partial rear backrest. A cylindrical bolster and loose pillows are visible as styling elements, not confirmed fixed components. Awaiting human review and adjudication."
+    },
+    {
+      "id": "aeris-dining-table",
+      "title": "Aeris Dining Table",
+      "group": "dining",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (dining/aeris)",
+        "usageNote": "Image remains outside the repository. Its local path is stored privately."
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "e55a18e15affdd744aebf3a713a414efe3b5318835e1cf1f1f7f477e857c2fc2",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "table",
+        "alsoAcceptableCategories": [
+          "dining_table"
+        ],
+        "acceptableSubtypes": [
+          "dining table",
+          "glass top dining table",
+          "rectangular dining table"
+        ],
+        "features": [
+          {
+            "id": "transparent-rectangular-top",
+            "description": "Broad transparent rectangular glass-like tabletop with clearly visible edges",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "curved-wooden-end-supports",
+            "description": "Two sculpted, curved transverse wood-like support rails beneath the short ends of the tabletop, with upturned rounded ends",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "central-longitudinal-beam",
+            "description": "Long wooden-looking beam running beneath the glass along the table's length, connecting the two curved end supports",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "curved-tapered-legs",
+            "description": "Four slender, elongated and gently curved tapered legs forming the table's support",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "glass-top-overhang",
+            "description": "Transparent rectangular tabletop extends beyond the wooden support framework",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "green-tinted-glass-edges",
+            "description": "Exposed tabletop edges show a subtle greenish tint",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "dark-woodlike-frame",
+            "description": "Dark reddish-brown wood-like framework with visible tonal grain",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "Some glass-to-frame contact points are not clearly visible",
+          "Underside joinery and attachment hardware cannot be verified from this view"
+        ],
+        "unverifiable": [
+          "Whether the glass is tempered or laminated",
+          "Exact glass thickness",
+          "Exact wood species or solid-wood composition",
+          "Method of attaching the glass to the frame",
+          "Exact dimensions and weight",
+          "Internal joinery and structural fasteners"
+        ],
+        "unsupportedClaims": [
+          "Tempered glass asserted as verified",
+          "Specific glass thickness or grade",
+          "Specific wood species claimed as observed",
+          "Exact dimensions or weight",
+          "Specific joinery or attachment methods",
+          "Manufacturer or brand identity inferred from the photograph"
+        ]
+      },
+      "notes": "Independent pre-model annotations. Single rectangular transparent-top dining table on a neutral background. The distinctive design involves sculpted curved end supports connected by a longitudinal wooden beam visible through the glass. Awaiting human review and adjudication."
+    },
+    {
+      "id": "alden-side-table",
+      "title": "Alden Side Table",
+      "group": "side_table",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (side-tables/alden_cleaned)",
+        "usageNote": "Image remains outside the repository. Local image path is stored privately."
+      },
+      "conditions": [
+        "multiple_objects",
+        "partial_occlusion"
+      ],
+      "imageSha256": "27a95b5f730f830e385616dc1b6aa0b5e899a2f8cfc2d75ea5d73b2954c0f884",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "nightstand",
+        "alsoAcceptableCategories": [
+          "side_table",
+          "bedside_table",
+          "bedside_cabinet",
+          "bedside_chest",
+          "chest_of_drawers",
+          "drawer_cabinet"
+        ],
+        "acceptableSubtypes": [
+          "three drawer nightstand",
+          "three drawer bedside table",
+          "three drawer side table",
+          "bedside chest",
+          "small chest of drawers"
+        ],
+        "features": [
+          {
+            "id": "three-stacked-drawers",
+            "description": "Three full-width horizontal drawer fronts stacked vertically in a rectangular cabinet",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "centered-ring-pulls",
+            "description": "Three circular brass or gold-toned ring pulls, one centered on each drawer front",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "contrasting-dark-frame",
+            "description": "Dark glossy corner uprights and perimeter framing contrast with the warm brown drawer fronts",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "gold-horizontal-trim",
+            "description": "Thin gold-toned horizontal accent lines beneath the tabletop and above the leg section",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "tapered-legs-metallic-feet",
+            "description": "Raised cabinet supported by slender dark tapering legs with gold-toned tips",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "brown-grained-drawers",
+            "description": "Warm medium-to-dark brown drawer fronts with visible wood-like grain",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "flat-rectangular-top",
+            "description": "Flat rectangular top with dark perimeter edging and softly rounded front corners",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "A large decorative lamp and small accessories partially obscure the tabletop",
+          "Rear surfaces and internal drawer construction are not visible"
+        ],
+        "unverifiable": [
+          "Exact wood species or solid-wood composition",
+          "Whether hardware is genuine brass or another metal",
+          "Drawer slides, internal compartments and mechanisms",
+          "Exact dimensions and weight",
+          "Construction details at the rear and underside",
+          "Whether any decorative objects are sold with the unit"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species claimed as directly observed",
+          "Solid wood construction asserted as verified",
+          "Genuine brass hardware asserted as verified",
+          "Soft-close drawers or specific drawer mechanisms",
+          "Exact dimensions or weight",
+          "Lamp or decorative accessories described as integrated furniture components",
+          "Manufacturer or brand identity inferred from visual appearance"
+        ]
+      },
+      "notes": "Independent pre-model annotations. The target is the three-drawer nightstand, not the large lamp, picture frame or decorative item placed on its surface. The most distinctive features are the repeated centered ring pulls, contrasting dark frame, warm brown fronts and metallic accents. Awaiting human review and adjudication."
+    },
+    {
+      "id": "chandra-one-seater",
+      "title": "Chandra One-Seater",
+      "group": "sofa_1_seater",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (sofas-1-seater/chandra)",
+        "usageNote": "Image remains outside the repository. Local file path is stored privately."
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "b24d7641e88fc91a2192de70de91d26ab5fb8b0f2bc0400c0b2e78293d81f468",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "chair",
+        "alsoAcceptableCategories": [
+          "armchair",
+          "accent_chair",
+          "lounge_chair",
+          "occasional_chair",
+          "single_seater_sofa",
+          "sofa_1_seater"
+        ],
+        "acceptableSubtypes": [
+          "upholstered armchair",
+          "accent armchair",
+          "lounge chair",
+          "wooden framed armchair",
+          "single seater sofa",
+          "mid century inspired armchair"
+        ],
+        "features": [
+          {
+            "id": "wraparound-curved-rail",
+            "description": "A sweeping, rounded wooden-looking upper rail wraps around the back and forms both armrests",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "integrated-front-uprights",
+            "description": "Front vertical posts visually continue from the curved armrest structure down into the front legs",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "inset-rounded-backrest",
+            "description": "Rounded, upright olive-green upholstered backrest sits within the open wooden frame, below the sweeping upper rail",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "thick-olive-seat",
+            "description": "Broad, thick olive-green upholstered seat with soft, rounded front and side edges",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "splayed-tapered-legs",
+            "description": "Four slender, tapered legs with outward-angled rear legs supporting the chair",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "exposed-seat-support",
+            "description": "Horizontal wood-like support rail visible beneath the upholstered seat cushion",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "contrasting-frame-upholstery",
+            "description": "Warm medium-brown wood-grain frame contrasts with muted olive-green fabric-like upholstery",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "Rear surfaces and exact backrest attachment points are not visible",
+          "Underside and internal seat-support construction cannot be inspected"
+        ],
+        "unverifiable": [
+          "Exact wood species and solid-wood composition",
+          "Whether the curved rail is a single bentwood component or assembled from multiple pieces",
+          "Exact upholstery fibre or fabric composition",
+          "Internal cushioning and frame construction",
+          "Exact dimensions and weight",
+          "Specific joinery and attachment techniques"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species claimed as observed",
+          "One-piece bentwood construction asserted as verified",
+          "Exact fabric composition claimed as verified",
+          "Specific internal construction methods",
+          "Exact dimensions or weight",
+          "Manufacturer or brand identity inferred from appearance"
+        ]
+      },
+      "notes": "Independent pre-model visual annotations. Single upholstered lounge chair or armchair on a neutral background. Its distinctive identity comes from the curved wraparound arm/back rail, the front posts continuing into the legs, and the rounded upholstered backrest within the open frame. Collection group is sofa_1_seater, but the visual category may reasonably be armchair. Awaiting human review and adjudication."
+    },
+    {
+      "id": "advait-three-seater",
+      "title": "Advait Three-Seater Sofa",
+      "group": "sofa_3_seater",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (sofas-3-seater/advait)",
+        "usageNote": "Image remains outside the repository. Local file path is stored privately."
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "9abb0bfdfce7dfdf153c9a14035ff68632f2dc524d7bfd16680d74b5c0971434",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "sofa",
+        "alsoAcceptableCategories": [
+          "three_seater_sofa",
+          "three_seat_sofa",
+          "couch",
+          "settee"
+        ],
+        "acceptableSubtypes": [
+          "three seater sofa",
+          "three seat sofa",
+          "wood framed sofa",
+          "upholstered wooden sofa",
+          "three seater couch",
+          "mid century inspired sofa"
+        ],
+        "features": [
+          {
+            "id": "three-seat-three-back",
+            "description": "Three separate thick upholstered seat cushions and three upright upholstered back cushions arranged across a long sofa",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "sweeping-wooden-armrests",
+            "description": "Wooden-looking armrest rails curve outward and sweep around both ends of the sofa, forming flowing sculptural upper outlines",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "open-side-support-geometry",
+            "description": "Large open curved or triangular spaces beneath the armrests, surrounded by sculpted wooden side supports that transition toward the legs",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "sculpted-underseat-frame",
+            "description": "Long exposed wooden front support beneath the seat cushions, with a distinctly sculpted and sloping lower profile connecting into the side framework",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "cream-upholstered-cushions",
+            "description": "Light cream or ivory fabric-like seat and back cushions with softly rounded edges and thick padded profiles",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "brown-woodgrain-frame",
+            "description": "Warm medium-to-dark brown wood-like framework with visible grain and smooth finished surfaces",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "tapered-angled-legs",
+            "description": "Slender angled and tapered support legs integrated visually with the sculpted wooden side framework",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "Cushions conceal portions of the seat support and rear frame",
+          "Rear joinery and underside construction are not visible from this viewing angle"
+        ],
+        "unverifiable": [
+          "Exact wood species or solid wood composition",
+          "Whether curved wooden-looking members are single pieces or assembled components",
+          "Exact upholstery fabric composition",
+          "Internal cushion and support construction",
+          "Specific joinery and attachment methods",
+          "Exact dimensions, weight and load capacity"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species claimed as observed",
+          "Single-piece carved wood construction asserted as verified",
+          "Exact upholstery material composition",
+          "Specific internal joining methods",
+          "Exact dimensions or weight",
+          "Manufacturer or brand identity inferred from appearance"
+        ]
+      },
+      "notes": "Independent pre-model visual annotations. Single three-seater sofa on a neutral background. Its distinctive identity comes from the sweeping curved armrests, open sculpted side supports, and exposed wooden under-seat structure. Three separate seat and back cushions are visible. The apparent continuity of the wooden framework does not establish a particular manufacturing or joinery method. Awaiting human review and adjudication."
+    },
+    {
+      "id": "denby-stool",
+      "title": "Denby Stool",
+      "group": "stool",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (stools/denby_cleaned)",
+        "usageNote": "Image remains outside the repository. Local file path is stored privately."
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "b21e1bd4bd7a793cf6002b7438ba412a927c25774df91077d07b145fca4454f6",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "stool",
+        "alsoAcceptableCategories": [
+          "ottoman",
+          "footstool",
+          "pouf",
+          "pouffe",
+          "upholstered_stool",
+          "ottoman_stool"
+        ],
+        "acceptableSubtypes": [
+          "upholstered stool",
+          "low upholstered stool",
+          "footstool",
+          "upholstered ottoman",
+          "accent ottoman",
+          "padded stool"
+        ],
+        "features": [
+          {
+            "id": "rounded-upholstered-body",
+            "description": "Broad, thick, rounded-square upholstered body with substantial padded sides",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "curved-wooden-side-supports",
+            "description": "Several exposed, short, curved wooden-looking support elements rise partway up the upholstered sides and cradle the body",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "low-profile-support-base",
+            "description": "The upholstered body sits close to the floor, with short wooden support elements projecting only slightly below its lower edge rather than conventional tall legs",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "cream-upholstery",
+            "description": "Light cream or ivory upholstery with a subtle woven-looking fabric texture",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "rounded-domed-top",
+            "description": "Softly domed, broad padded top surface with generously rounded corners",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "upper-perimeter-seam",
+            "description": "Visible stitched seam follows the rounded upper perimeter of the upholstered body",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "warm-woodgrain-supports",
+            "description": "Warm honey-brown wooden-looking support elements with visible grain and rounded, smooth edges",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          },
+          {
+            "id": "backless-armless-form",
+            "description": "Backless and armless seating form, without an upright backrest or armrests",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "The underside and internal support connections are not visible",
+          "The full number and arrangement of wooden supports cannot be verified from this angle"
+        ],
+        "unverifiable": [
+          "Exact wood species and solid-wood composition",
+          "Exact upholstery fibre composition",
+          "Internal cushion filling and structural frame",
+          "Whether the curved wooden supports are single-piece or assembled components",
+          "Total number of supports on hidden sides",
+          "Exact dimensions, weight and load capacity"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species claimed as observed",
+          "Solid-wood construction asserted as verified",
+          "Exact upholstery fibre composition",
+          "Specific foam density or cushion filling",
+          "Exact number of hidden support elements",
+          "Specific manufacturing or joinery techniques",
+          "Exact dimensions or weight",
+          "Manufacturer or brand inferred from appearance"
+        ]
+      },
+      "notes": "Independent pre-model visual annotations. Single low upholstered stool or ottoman on a neutral background. The distinctive identity comes from the large rounded upholstered body and short, curved wooden-looking side supports that cradle the upholstery. Three support elements are visibly distinguishable, but the total number is not verified. Awaiting human review and adjudication."
+    },
+    {
+      "id": "marl-study-table",
+      "title": "Marl Study Table",
+      "group": "study_table",
+      "source": {
+        "kind": "retailer_product_photo",
+        "description": "The Furniture Collective collection (study-tables/marl)",
+        "usageNote": "Image remains outside the repository. Local file path is stored privately."
+      },
+      "conditions": [
+        "clean_product_photo"
+      ],
+      "imageSha256": "4ef633a94f43def18fa7f64833b90b3653d6d105d35c8195947e8c9f4ad39998",
+      "annotationStatus": "provisional",
+      "expected": {
+        "outcome": "furniture_identified",
+        "category": "desk",
+        "alsoAcceptableCategories": [
+          "writing_desk",
+          "study_table",
+          "office_desk",
+          "table"
+        ],
+        "acceptableSubtypes": [
+          "writing desk",
+          "study desk",
+          "wooden writing desk",
+          "minimalist writing desk",
+          "rectangular wooden desk",
+          "slim writing table"
+        ],
+        "features": [
+          {
+            "id": "long-rectangular-top",
+            "description": "Long, flat rectangular tabletop with a relatively slim overall profile",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "segmented-front-apron",
+            "description": "Shallow horizontal front apron divided by three narrow vertical seams into four flush rectangular sections, with no visible external handles",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "curved-leg-junctions",
+            "description": "Softly rounded or arched inner corners where the upper apron transitions toward the vertical legs",
+            "priority": "critical",
+            "aspect": "structure",
+            "distinctive": true
+          },
+          {
+            "id": "four-slender-legs",
+            "description": "Four long, slender and mostly straight legs with subtle tapering toward the floor",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "open-underdesk-space",
+            "description": "Large open space beneath the tabletop without visible lower stretchers or shelves",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "projecting-tabletop-edge",
+            "description": "Thin tabletop lip projecting slightly beyond the supporting apron, with softly finished edges",
+            "priority": "supporting",
+            "aspect": "structure",
+            "distinctive": false
+          },
+          {
+            "id": "warm-brown-woodgrain",
+            "description": "Warm medium-brown wood-like finish with visible grain across the top, apron and legs",
+            "priority": "supporting",
+            "aspect": "appearance",
+            "distinctive": false
+          }
+        ],
+        "knownOcclusions": [
+          "Underside and rear construction are not visible",
+          "Internal compartments or mechanisms behind the front apron cannot be seen"
+        ],
+        "unverifiable": [
+          "Whether the segmented apron contains functional drawers or decorative panels",
+          "Exact wood species and solid-wood composition",
+          "Internal frame construction",
+          "Joinery and attachment methods",
+          "Exact dimensions and weight",
+          "Any concealed storage mechanisms"
+        ],
+        "unsupportedClaims": [
+          "Specific wood species asserted as verified",
+          "Solid-wood construction claimed as observed",
+          "Functional drawers asserted without evidence",
+          "Soft-close or concealed mechanisms claimed",
+          "Exact dimensions or weight",
+          "Specific joinery or assembly methods",
+          "Manufacturer or brand identity inferred from visual appearance"
+        ]
+      },
+      "notes": "Independent pre-model annotations for the final benchmark case. Single rectangular wood-like study table or writing desk on a neutral background. Its distinctive details include the four-section flush front apron and curved internal leg junctions. The photograph does not establish whether the apron sections are operational drawers. Awaiting human review and adjudication."
     }
   ]
 }
