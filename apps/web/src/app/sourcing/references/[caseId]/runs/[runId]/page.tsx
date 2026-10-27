@@ -50,7 +50,7 @@ export default async function RunPage({ params, searchParams }: Params) {
   return (
     <div className="space-y-12">
       <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-sm text-muted">
-        <Link href="/sourcing" className="min-h-10 content-center hover:text-ink">
+        <Link href="/sourcing/workspace" className="min-h-10 content-center hover:text-ink">
           Workspace
         </Link>
         <Icon name="forward" className="h-3.5 w-3.5" />

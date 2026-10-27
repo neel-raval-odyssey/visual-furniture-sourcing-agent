@@ -1,17 +1,32 @@
 # Visual sourcing web experience
 
-The first usable interface for the Visual Furniture Sourcing Agent: a local Next.js workspace over the real saved sourcing records. Written for P1-006 on 2026-10-27.
+The first usable interface for the Visual Furniture Sourcing Agent: a local Next.js workspace over the real saved sourcing records. Written for P1-006 on 2026-10-27; simple view added in P1-006.1 (same day).
 
 **Scope.** This is a local development experience over saved evidence. It does not run live marketplace discovery or paid model inference, and it is not a deployable multi-user application.
 
 ## 1. User flow
 
+Two layers over the same saved records and services.
+
+**Simple view (default, for buyers, designers and presentations):**
+
 ```
-/sourcing ─ references (photo, readiness) ─┬─ /sourcing/references/<case>        fingerprint, runs, "Run using saved evidence"
-           upload a photo ─────────────────┤    └─ /sourcing/references/<case>/runs/<run>        results + recorded stage progress
-                                           │          └─ …/candidates/<listing id>                 side-by-side comparison + evidence
-                                           └─ /sourcing/uploads/<upload id>       "Photo uploaded — awaiting image understanding"
+/sourcing  "Find furniture that looks like this." + the saved example photo
+  ├─ Explore example results ─→ /sourcing/results/<case>/<run>                       closest design, other designs, not-yet-compared
+  │                                └─ Compare designs ─→ …/compare/<listing id>        both photos, verdict, similar / different
+  └─ Upload your own photo ───→ /sourcing/uploads/<upload id>                        "Photo saved successfully. Image analysis is the next step."
 ```
+
+**Advanced workspace (for developers and researchers),** linked discreetly in the header and footer:
+
+```
+/sourcing/workspace ─ references (photo, readiness) ─┬─ /sourcing/references/<case>        fingerprint, runs, "Run using saved evidence"
+                     upload a photo ─────────────────┤    └─ /sourcing/references/<case>/runs/<run>        results + recorded stage progress
+                                                     │          └─ …/candidates/<listing id>                 side-by-side comparison + evidence
+                                                     └─ /sourcing/uploads/<upload id>
+```
+
+All P1-006 deep links under `/sourcing/references/…` are unchanged.
 
 ## 2. Routes and components
 
@@ -19,11 +34,14 @@ The first usable interface for the Visual Furniture Sourcing Agent: a local Next
 
 | Page | Purpose |
 |---|---|
-| `page.tsx` | Workspace: introduction, references with readiness, provider status, upload, and staged uploads |
+| `page.tsx` | Simple start screen: the promise, the saved example photo, "Explore example results", and photo upload |
+| `results/[caseId]/[runId]/page.tsx` | Simple results: closest design, other designs, not-yet-compared products, technical details collapsed |
+| `results/[caseId]/[runId]/compare/[listingId]/page.tsx` | Compare designs: both photos, verdict, most important difference, similar / different, detail behind disclosures |
+| `workspace/page.tsx` | Advanced workspace: references with readiness, provider status, upload, and staged uploads |
 | `references/[caseId]/page.tsx` | The saved Luna fingerprint (structure, appearance and distinctive features, each labelled with its certainty), runs, next action |
 | `references/[caseId]/runs/[runId]/page.tsx` | Results: overview counts; the closest verified design next to the reference; verified candidates in Sol order (with an optional SigLIP retrieval order via `?sort=retrieval`); unverified candidates listed separately; the recorded stage timeline; warnings, follow-ups and model provenance |
 | `…/candidates/[listingId]/page.tsx` | Comparison: reference and candidate photos (full-size view, no overlays), grouped Sol evidence, product and supplier facts |
-| `uploads/[uploadId]/page.tsx` | A staged upload and its honest status |
+| `uploads/[uploadId]/page.tsx` | A staged upload: "Photo saved successfully. Image analysis is the next step.", with the technical status collapsed |
 | `layout.tsx` | The shell and the local-access explanation |
 
 **API routes** (`apps/web/src/app/api/sourcing/`, Node runtime):
@@ -48,6 +66,8 @@ The first usable interface for the Visual Furniture Sourcing Agent: a local Next
 | `run-offline-button.tsx` | Client component |
 | `upload-dropzone.tsx` | Client component |
 | `run-refresher.tsx` | Client component: bounded polling |
+| `simple/start.tsx`, `simple/results.tsx`, `simple/compare.tsx` | The three simple screens, as data-in views (the pages only load records) |
+| `simple/parts.tsx` | Product card, difference note, disclosure, buttons, the saved-example note |
 
 **Styling:** Tailwind v4 theme tokens in `src/app/globals.css` (ivory, graphite and walnut accent, with status colours) and system font stacks (a serif for headings). No UI or icon library was added, and no web fonts are fetched.
 
@@ -62,6 +82,7 @@ The first usable interface for the Visual Furniture Sourcing Agent: a local Next
 | `uploads.ts` | Upload staging (section 7) |
 | `offline-run.ts` | The P1-005 orchestrator (section 8) |
 | `labels.ts` | Presentation vocabulary |
+| `simple.ts` | Simple-view models: featured example, plain verdicts, similarities and differences, short titles, balanced grids |
 | `local-access.ts`, `page-gate.ts` | The local-only guard |
 
 Pages receive presentation data only: no local paths, raw model payloads or credentials. There is no second source of truth: every view is derived from `result.json` and `run.json`.
@@ -122,7 +143,7 @@ Bind the dev server to loopback (`pnpm dev:local` does).
   - a fresh id and folder each time, with exclusive writes, so nothing is ever overwritten.
 - **What it doesn't do:** send anything anywhere, run Luna, or search.
 
-The upload page says **"Photo uploaded — awaiting image understanding"** and explains the approvals still needed. AVIF is not accepted for upload: the local conversion path lives in `services/vision` and is used only for discovered listing images.
+The upload page says **"Photo saved successfully. Image analysis is the next step."** and states that nothing has been analysed or searched; the approvals still needed (and the record's status, `awaiting_image_understanding`) are under "Technical details". AVIF is not accepted for upload: the local conversion path lives in `services/vision` and is used only for discovered listing images.
 
 ## 8. Offline sourcing from the UI
 
@@ -184,11 +205,30 @@ The workspace states: "Automated marketplace discovery is awaiting authorized pr
 | `ui/data.test.ts` | Readiness, a validated run, partial verification, a missing photo, invalid results and journals, stale runs |
 | `ui/routes.test.ts` | Evidence (valid, traversal, unknown ids, symlink, changed, missing, oversized, unsupported, disabled, production, non-loopback); uploads (valid, unique ids, wrong type, corrupt, oversized, cross-origin); offline run (orchestrator reuse, prior runs kept, duplicate concurrent submissions, unsupported modes, not eligible) |
 | `components/sourcing/components.test.tsx` | Server rendering of cards (verified and unverified), evidence groups with partial differences, marketplace-claim wording, the stage vocabulary, the upload pre-check |
+| `components/sourcing/simple/simple.test.tsx` | The simple view (section 13a) |
 
 **Manual QA:**
 - headless Chrome against `pnpm dev:local`, with DevTools-protocol mobile emulation;
 - widths 1440, 768 and 390 px;
 - no horizontal overflow measured on any page.
+
+## 13a. The simple view
+
+**Purpose:** someone who knows nothing about AI should understand the product in seconds: one promise, the saved example photo, one main action.
+
+**What it shows, all from the saved `result.json` (nothing hard-coded):**
+- **Featured example:** the genuine reference whose latest readable run compared the most products (`getFeaturedExample`); synthetic cases only if no genuine one exists, and then labelled.
+- **Order:** the recorded verification order. The first verified product is "Closest design found"; the others follow in a grid sized to stay balanced (3 → one row, 4 → 2×2). Products without an assessment are listed separately as "Not yet compared", with the reason and no score.
+- **Plain verdicts:** `exact_visual_design` → "Very close design" (with "not the same product or maker"), `close_variant` → "Close design", `similar_alternative` → "Similar alternative", `non_match` → "Different design", `insufficient_evidence` → "Not enough detail", no assessment → "Not yet compared". Nothing says "exact match", "identical", "same manufacturer" or "verified supplier".
+- **Why it looks similar / what's different:** recorded evidence items, quoted as written. Similarities: structure before finish, defining before supporting. Differences: structural before colour or finish, then by importance, partial before mismatch. So Ettrick candidate 001 leads with "Headboard arch arrangement — Original: seven… This design: six…".
+- **Short titles:** the marketplace title up to "with"/"for"/a comma, cut at a word boundary; the full title stays in a tooltip and in the product details.
+- **Price and minimum order:** one secondary line, always "as listed".
+
+**Hidden by default, one click away:** design index, classification and confidence wording, SigLIP rank and cosine, model and instruction versions, run id (results page: "Technical details"; compare page: "See detailed comparison", which also holds the full grouped evidence, and "Product and supplier details"). Each links to the matching advanced-workspace page.
+
+**Honesty notes:** "This example uses saved Alibaba listings. Live marketplace search is not yet available." sits beside the main action and in the results header. Uploading is described as saving the photo for later analysis; there is no "Find suppliers" action for uploads.
+
+**Tests** (`components/sourcing/simple/simple.test.tsx`): the start screen features the saved reference and links to its run; truthful empty states; results in saved order with no technical terms, scores or "exact" in the undisclosed content; the arch difference shown; unverified products unscored; detailed evidence and Alibaba links present; no request made by rendering. A read-only check against the genuine Ettrick records runs when they exist locally.
 
 ## 14. Current limitations
 

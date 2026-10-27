@@ -56,16 +56,19 @@ export function EvidenceImage({
           </div>
         ) : null}
         {label ? (
-          <span className="absolute left-3 top-3 rounded-full bg-paper/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-ink shadow-sm">{label}</span>
+          <span className="absolute left-2 top-2 rounded-full bg-paper/95 px-2.5 py-1 text-xs sm:left-3 sm:top-3 font-semibold tracking-wide text-ink shadow-sm">{label}</span>
         ) : null}
         {zoomable && src && !failed ? (
           <button
             type="button"
             onClick={() => dialog.current?.showModal()}
-            className="absolute bottom-3 right-3 inline-flex min-h-10 items-center gap-1.5 rounded-full bg-paper/95 px-3 py-2 text-xs font-medium text-ink shadow-sm hover:bg-paper"
+            className="absolute bottom-2 right-2 inline-flex min-h-10 min-w-10 items-center justify-center gap-1.5 rounded-full sm:bottom-3 sm:right-3 bg-paper/95 px-3 py-2 text-xs font-medium text-ink shadow-sm hover:bg-paper"
           >
             <Icon name="zoom" className="h-4 w-4" />
-            View full size<span className="sr-only">: {alt}</span>
+            <span className="hidden sm:inline">View full size</span>
+            <span className="sr-only">
+              <span className="sm:hidden">View full size</span>: {alt}
+            </span>
           </button>
         ) : null}
       </div>

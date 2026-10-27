@@ -57,7 +57,7 @@ export default async function ReferencePage({ params }: Params) {
   return (
     <div className="space-y-12">
       <nav aria-label="Breadcrumb">
-        <Link href="/sourcing" className="inline-flex min-h-10 items-center gap-1 text-sm text-muted hover:text-ink">
+        <Link href="/sourcing/workspace" className="inline-flex min-h-10 items-center gap-1 text-sm text-muted hover:text-ink">
           <Icon name="back" className="h-4 w-4" /> Workspace
         </Link>
       </nav>

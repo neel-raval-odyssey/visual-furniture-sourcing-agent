@@ -11,7 +11,7 @@ An AI-powered furniture sourcing application. Given a reference photo of a piece
 > - **Real, offline:** end-to-end orchestration (`pnpm source:auto`) from a saved reference to a consolidated sourcing result.
 > - **Synthetic stubs:** mock discovery fixtures and mock visual verification. Real candidates without a Sol result are reported as "not assessed".
 > - **Provisional:** ranking.
-> - **Real, local:** a web workspace for saved sourcing results, offline runs and private photo staging (`pnpm dev:local`).
+> - **Real, local:** a web interface for saved sourcing results — a plain-language simple view plus an advanced workspace with offline runs and private photo staging (`pnpm dev:local`).
 > - **Not available yet:** live end-to-end Alibaba sourcing, and analysis of newly uploaded photos.
 
 ## Requirements
@@ -45,7 +45,7 @@ Run from the repository root:
 | Command          | Description                                 |
 | ---------------- | ------------------------------------------- |
 | `pnpm dev`       | Start the Next.js dev server                |
-| `pnpm dev:local` | Start the local sourcing workspace (private data enabled, loopback only) at http://localhost:3000/sourcing |
+| `pnpm dev:local` | Start the local sourcing interface (private data enabled, loopback only): simple view at http://localhost:3000/sourcing, advanced workspace at `/sourcing/workspace` |
 | `pnpm build`     | Production build of the web app             |
 | `pnpm start`     | Serve the production build                  |
 | `pnpm lint`      | Run ESLint                                  |
@@ -108,11 +108,17 @@ pnpm source:candidates --case ettrick-bed --run        # normalized candidates a
 
 ## Using the web workspace
 
-A local Next.js interface over the saved sourcing records: references and their fingerprints, results with the reference and candidates side by side, Sol evidence (including partial structural differences), listing and supplier details, offline runs from saved evidence, and private photo staging. See [docs/visual-sourcing-web-experience.md](docs/visual-sourcing-web-experience.md).
+A local Next.js interface over the saved sourcing records, in two layers over the same data:
+
+- **Simple view** (`/sourcing`, the default): "Find furniture that looks like this." Start → Results → Compare designs for the saved example, in plain language, with the original Alibaba listings. Uploading a photo only saves it for later analysis.
+- **Advanced workspace** (`/sourcing/workspace`): every reference and fingerprint, run history and progress, SigLIP and Sol results, full evidence, provenance and offline runs from saved evidence.
+
+See [docs/visual-sourcing-web-experience.md](docs/visual-sourcing-web-experience.md).
 
 ```sh
 pnpm dev:local     # local-only: VFSA_LOCAL_SOURCING_UI=1, bound to 127.0.0.1
-# open http://localhost:3000/sourcing
+# open http://localhost:3000/sourcing            (simple view)
+#      http://localhost:3000/sourcing/workspace  (advanced workspace)
 ```
 
 It makes no marketplace or paid model requests. Private data is never served by a production build.

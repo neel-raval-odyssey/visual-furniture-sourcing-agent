@@ -51,7 +51,8 @@ function fakeApify(opts: { start?: () => Promise<ApifyRun>; status?: ApifyRun["s
     ),
     getRun: vi.fn(async (id: string) => fakeRun({ id, status: opts.status ?? "SUCCEEDED", datasetId: datasetOf.get(id) ?? "DatasetKeyword0001" })),
     getDatasetItems: vi.fn(async (id: string) => datasets[id]),
-    listRecentRuns: vi.fn(async () => [fakeRun({ id: "RunFoundTest000001", status: "RUNNING" })]),
+    // Started "now", so it falls inside the uncertain-start window whatever the wall-clock time.
+    listRecentRuns: vi.fn(async () => [fakeRun({ id: "RunFoundTest000001", status: "RUNNING", startedAt: new Date().toISOString() })]),
     createKeyValueStore: vi.fn(async () => ({ id: "StoreTest000000001" })),
     putRecord: vi.fn(async () => {}),
     deleteKeyValueStore: vi.fn(async () => {}),

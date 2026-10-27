@@ -21,21 +21,25 @@ export default async function SourcingLayout({ children }: { children: React.Rea
       </a>
       <header className="border-b border-line bg-ivory/90 backdrop-blur supports-[backdrop-filter]:bg-ivory/75">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/sourcing" className="flex items-baseline gap-2">
-            <span className="font-serif text-xl text-ink">Visual Furniture Sourcing</span>
-            <span className="hidden text-xs font-medium uppercase tracking-[0.14em] text-muted sm:inline">Workspace</span>
+          <Link href="/sourcing" className="font-serif text-xl text-ink">
+            Visual Furniture Sourcing
           </Link>
-          <span className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-paper px-3 py-1 text-xs text-muted">
-            <Icon name="lock" className="h-3.5 w-3.5" />
-            Local · offline
-          </span>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link href="/sourcing/workspace" className="hidden min-h-10 content-center text-xs text-muted underline-offset-4 hover:text-ink hover:underline sm:block">
+              Advanced workspace
+            </Link>
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-paper px-3 py-1 text-xs text-muted">
+              <Icon name="lock" className="h-3.5 w-3.5" />
+              Private preview
+            </span>
+          </div>
         </div>
       </header>
       <main id="main" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {!enabled ? (
           <div className="mx-auto max-w-2xl">
             <Notice tone="neutral" title="Local sourcing data is disabled">
-              This workspace reads private photographs, listings and model outputs and has no sign-in yet, so it only runs in local development. Start it with{" "}
+              This preview reads private photographs, listings and model outputs and has no sign-in yet, so it only runs in local development. Start it with{" "}
               <code className="rounded bg-sand px-1">{LOCAL_UI_FLAG}=1</code> using <code className="rounded bg-sand px-1">pnpm dev:local</code>. It is never served by a production build.
             </Notice>
           </div>
@@ -50,9 +54,14 @@ export default async function SourcingLayout({ children }: { children: React.Rea
         )}
       </main>
       <footer className="border-t border-line">
-        <p className="mx-auto max-w-7xl px-4 py-6 text-xs text-muted sm:px-6 lg:px-8">
-          Design assessments are model judgements, not manufacturer or product identity. Listing and supplier details are as reported by the marketplace and are not independently verified. Not affiliated with Alibaba.com.
-        </p>
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-6 lg:px-8">
+          <p>
+            Similarity notes are automated judgements from photos, not proof of the same product or maker. Listing and supplier details are shown as listed on Alibaba.com and are not independently checked. Not affiliated with Alibaba.com.
+          </p>
+          <Link href="/sourcing/workspace" className="min-h-10 shrink-0 content-center underline-offset-4 hover:text-ink hover:underline sm:min-h-0">
+            Advanced workspace
+          </Link>
+        </div>
       </footer>
     </div>
   );

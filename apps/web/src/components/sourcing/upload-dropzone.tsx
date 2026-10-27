@@ -95,7 +95,7 @@ export function UploadDropzone() {
         ) : (
           <Icon name="upload" className="h-7 w-7 text-accent" />
         )}
-        <span className="font-medium text-ink">{file ? file.name : "Drop a furniture photograph here, or choose a file"}</span>
+        <span className="font-medium text-ink">{file ? file.name : "Drop a furniture photo here, or choose a file"}</span>
         <span className="text-xs text-muted">PNG, JPEG or WebP · up to {MAX_UPLOAD_MB} MB · stored privately on this computer</span>
         <input
           ref={input}
@@ -114,7 +114,7 @@ export function UploadDropzone() {
           className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper hover:bg-ink-soft disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Icon name="upload" className="h-4 w-4" />
-          {status.kind === "uploading" ? "Saving privately…" : "Stage photo"}
+          {status.kind === "uploading" ? "Saving privately…" : "Save photo"}
         </button>
         {file ? (
           <button type="button" onClick={() => { setFile(null); setPreviewUrl(null); if (input.current) input.current.value = ""; }} className="min-h-11 px-2 text-sm text-muted underline-offset-4 hover:underline">
