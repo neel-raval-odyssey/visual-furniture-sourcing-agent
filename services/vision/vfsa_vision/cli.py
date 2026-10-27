@@ -3,6 +3,7 @@
     python -m vfsa_vision embed        < request.json   # JSON result on stdout
     python -m vfsa_vision environment [--model ID]       # no weights loaded
     python -m vfsa_vision download --model ID            # explicit setup step (network)
+    python -m vfsa_vision convert --input F --sha256 H --output O.png   # e.g. AVIF evidence -> PNG
 
 `embed` and `environment` run with the Hugging Face hub forced offline.
 Machine-readable output goes to stdout; diagnostics go to stderr.
@@ -208,6 +209,36 @@ def run_environment(model_id: str, revision: str | None, cache_dir: Path | None)
     }
 
 
+def run_convert(input_path: str, expected_sha256: str, output_path: str) -> tuple[int, dict]:
+    """Decodes a hash-checked local image (any supported format, e.g. AVIF) and
+    writes it as a new PNG. Never overwrites; the original is left unchanged."""
+    import hashlib
+
+    from .images import ImageProblem, load_image
+
+    if not (os.path.isabs(output_path) and output_path.endswith(".png")):
+        return EXIT_REQUEST, _error("invalid_request", "output must be an absolute .png path")
+    parent = os.path.dirname(output_path)
+    if not os.path.isdir(parent) or os.path.islink(parent):
+        return EXIT_REQUEST, _error("invalid_request", "output folder must exist and not be a symbolic link")
+    try:
+        loaded = load_image(input_path, expected_sha256)
+    except ImageProblem as problem:
+        return EXIT_INPUT, _error("image_invalid", problem.message, problem=problem.code)
+    try:
+        with open(output_path, "xb") as handle:
+            loaded.image.save(handle, format="PNG")
+    except FileExistsError:
+        return EXIT_REQUEST, _error("output_exists", "output file already exists")
+    with open(output_path, "rb") as handle:
+        digest = hashlib.sha256(handle.read()).hexdigest()
+    return EXIT_OK, {
+        "status": "ok",
+        "source": {"format": loaded.format, "sha256": loaded.sha256},
+        "output": {"format": "PNG", "sha256": digest, "width": loaded.width, "height": loaded.height},
+    }
+
+
 def _emit(payload: dict) -> None:
     sys.stdout.write(json.dumps(payload) + "\n")
     sys.stdout.flush()
@@ -225,7 +256,16 @@ def main(argv: list[str] | None = None) -> int:
     dl.add_argument("--revision")
     for p in (embed, env, dl):
         p.add_argument("--cache-dir", type=Path)
+    conv = sub.add_parser("convert", help="decode a hash-checked image (e.g. AVIF) and write it as a new PNG")
+    conv.add_argument("--input", required=True)
+    conv.add_argument("--sha256", required=True)
+    conv.add_argument("--output", required=True)
     args = parser.parse_args(argv)
+
+    if args.command == "convert":
+        code, payload = run_convert(args.input, args.sha256, args.output)
+        _emit(payload)
+        return code
 
     if args.command == "download":
         from .model import DEFAULT_CACHE_DIR, download

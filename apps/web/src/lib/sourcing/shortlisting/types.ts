@@ -106,7 +106,7 @@ export interface VisualShortlist {
     /** Decoded image details; null when no model ran. */
     image: { format: string; width: number; height: number } | null;
   };
-  candidates: { manifestCapturedAt: IsoTimestamp; acquisitionMethod: "operator_assisted"; providerId: string };
+  candidates: { manifestCapturedAt: IsoTimestamp; acquisitionMethod: "operator_assisted" | "provider_api"; providerId: string };
   imageSelectionPolicy: string;
   topK: number;
   counts: { listings: number; embedded: number; shortlisted: number; belowTopK: number; excluded: number };

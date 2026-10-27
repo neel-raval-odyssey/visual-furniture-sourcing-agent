@@ -1,0 +1,101 @@
+{
+  "recordType": "provider_response_snapshot",
+  "schemaVersion": 1,
+  "dataSource": "mock",
+  "source": "apify:scrapewise/alibaba-com-scraper",
+  "mode": "keyword",
+  "providerRunId": "SyntheticRunKeyword1",
+  "datasetId": "SyntheticDatasetKw01",
+  "finishedAt": "2026-10-27T00:01:00.000Z",
+  "fetchedAt": "2026-10-27T00:01:05.000Z",
+  "itemLimit": 50,
+  "truncated": false,
+  "items": [
+    {
+      "type": "product",
+      "productId": "1000000000103",
+      "title": "[SYNTHETIC] Arched panel bed 103",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000103.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000103-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000103-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000103-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 1,
+      "searchedAs": "keyword",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 103 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier103.alibaba.example"
+      },
+      "searchInput": "dark brown panel bed arched headboard"
+    },
+    {
+      "type": "product",
+      "productId": "1000000000201",
+      "title": "[SYNTHETIC] Arched panel bed 201",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000201.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000201-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000201-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000201-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 2,
+      "searchedAs": "keyword",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 201 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier201.alibaba.example"
+      },
+      "searchInput": "dark brown panel bed arched headboard"
+    }
+  ]
+}

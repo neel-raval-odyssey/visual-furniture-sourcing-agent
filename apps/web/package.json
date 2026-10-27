@@ -15,7 +15,9 @@
     "eval:images": "tsx scripts/eval-images.ts",
     "source:candidates": "tsx scripts/source-candidates.ts",
     "shortlist:images": "tsx scripts/shortlist-images.ts",
-    "verify:visual": "tsx scripts/verify-visual.ts"
+    "verify:visual": "tsx scripts/verify-visual.ts",
+    "discover:marketplace": "tsx scripts/discover-marketplace.ts",
+    "source:auto": "tsx scripts/source-auto.ts"
   },
   "dependencies": {
     "next": "16.4.3",

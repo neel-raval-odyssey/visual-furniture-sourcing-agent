@@ -18,6 +18,8 @@
     "source:candidates": "pnpm --filter web source:candidates",
     "shortlist:images": "pnpm --filter web shortlist:images",
     "verify:visual": "pnpm --filter web verify:visual",
+    "discover:marketplace": "pnpm --filter web discover:marketplace",
+    "source:auto": "pnpm --filter web source:auto",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }

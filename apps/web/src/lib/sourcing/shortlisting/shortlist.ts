@@ -133,7 +133,11 @@ export function buildVisualShortlist(input: BuildShortlistInput): VisualShortlis
         ? { format: response.reference.format, width: response.reference.width, height: response.reference.height }
         : null,
     },
-    candidates: { manifestCapturedAt: imported.capturedAt, acquisitionMethod: "operator_assisted", providerId: "curated-alibaba" },
+    candidates: {
+      manifestCapturedAt: imported.capturedAt,
+      acquisitionMethod: imported.acquisitionMethod,
+      providerId: imported.providers[0]?.providerId ?? "curated-alibaba",
+    },
     imageSelectionPolicy: IMAGE_SELECTION_POLICY,
     topK,
     counts: {

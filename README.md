@@ -4,9 +4,11 @@ An AI-powered furniture sourcing application. Given a reference photo of a piece
 
 > Status: early development.
 > - **Real:** image understanding (GPT-6 Luna), usable from a local CLI.
+> - **Implemented, awaiting first authorized live run:** automated Alibaba.com discovery through a third-party provider (Apify Actor `scrapewise/alibaba-com-scraper`, not an official Alibaba.com API; `pnpm discover:marketplace`).
 > - **Real, operator-assisted:** Alibaba.com candidate intake. A person finds candidates with Alibaba Lens or Alibaba.com search and records them in a private manifest; the app imports them and searches nothing itself.
 > - **Real, local:** visual shortlisting. SigLIP 2 image embeddings rank recorded candidates by cosine similarity to the reference (a retrieval signal, not a verified match).
-> - **Implemented, awaiting first live run:** detailed visual verification with GPT-6.1 Sol (`pnpm verify:visual`; paid requests only with `--live` and an explicit cap).
+> - **Real:** detailed visual verification with GPT-6.1 Sol (`pnpm verify:visual`; paid requests only with `--live` and an explicit cap), run on the four Ettrick candidates.
+> - **Real, offline:** end-to-end orchestration (`pnpm source:auto`) from a saved reference to a consolidated sourcing result.
 > - **Synthetic stubs:** mock discovery fixtures and mock visual verification. Real candidates without a Sol result are reported as "not assessed".
 > - **Provisional:** ranking.
 > - **Not available yet:** live end-to-end Alibaba sourcing, and any upload UI.
@@ -53,6 +55,8 @@ Run from the repository root:
 | `pnpm source:candidates --case <id> --prepare\|--validate\|--run` | Operator-assisted Alibaba.com candidate intake from a saved fingerprint (offline; see [docs/alibaba-candidate-intake.md](docs/alibaba-candidate-intake.md)) |
 | `pnpm shortlist:images --case <id> [--dry-run] [--top-k <n>]` | Rank a case's recorded candidates by SigLIP 2 image-embedding cosine similarity (local model; see [docs/visual-shortlisting.md](docs/visual-shortlisting.md)) |
 | `pnpm verify:visual --case <id> [--dry-run\|--report]` | Detailed visual verification with GPT-6.1 Sol. Dry run by default; `--live` with `--listing-id`/`--all` and `--max-paid-requests` sends paid requests; `--report` compares saved results offline (see [docs/visual-verification.md](docs/visual-verification.md)) |
+| `pnpm discover:marketplace --case <id> --provider apify --mode image\|keyword\|hybrid` | Automated candidate discovery via a third-party provider. Dry run by default; `--live` needs explicit caps and authorizations; `--resume`, `--replay` (offline), `--fetch-images` (see [docs/automated-marketplace-discovery.md](docs/automated-marketplace-discovery.md)) |
+| `pnpm source:auto --case <id> --source curated\|provider-run\|provider-live --plan\|--run --offline` | Offline orchestration of the whole workflow into one sourcing result; also `--resume <run id> --offline` (see [docs/automated-sourcing-orchestration.md](docs/automated-sourcing-orchestration.md)) |
 | `pnpm check`     | Lint, typecheck, test and build in sequence |
 
 ## Analysing a local furniture photo
@@ -100,6 +104,24 @@ pnpm source:candidates --case ettrick-bed --run        # normalized candidates a
 - **Synthetic sample:** add `--synthetic --predictions evals/image-understanding/synthetic/predictions --candidates evals/candidates/synthetic` and use case `syn-bed-001`.
 - **Detailed visual verification is not implemented yet:** every imported candidate is reported as "not assessed".
 
+## Running the whole sourcing workflow
+
+`pnpm source:auto` composes the stages for one case: the saved fingerprint, candidates (curated manifest or a saved discovery run), image checks, SigLIP 2 shortlist (reused or computed locally), and saved Sol assessments, into one result. It runs offline only. See [docs/automated-sourcing-orchestration.md](docs/automated-sourcing-orchestration.md).
+
+```sh
+pnpm source:auto --case ettrick-bed --source curated --plan            # checks and decisions; writes nothing
+pnpm source:auto --case ettrick-bed --source curated --run --offline   # evals/local/sourcing-runs/ettrick-bed/<run id>/result.md
+```
+
+## Discovering candidates automatically
+
+Searches Alibaba.com through a configured third-party provider and saves a private candidate manifest that the existing commands read with `--candidates <run folder>`. Review the access and data-use limitations in [docs/automated-marketplace-discovery.md](docs/automated-marketplace-discovery.md) before any live run.
+
+```sh
+pnpm discover:marketplace --case ettrick-bed --provider apify --mode image --dry-run     # plan only; nothing sent
+pnpm discover:marketplace --case ettrick-bed --provider apify --mode keyword --dry-run
+```
+
 ## Shortlisting candidates by image similarity
 
 Needs the Python environment and a one-time model download ([services/vision/README.md](services/vision/README.md)). Inference runs locally; nothing is fetched or sent anywhere.
@@ -135,7 +157,7 @@ AGENTS.md      Rules for AI agents working in this repo
 ## Architecture summary
 
 1. **Image understanding** — a vision model (GPT-6 Luna, implemented) describes the reference furniture: category, materials, style and distinguishing features.
-2. **Candidate discovery** — an `AlibabaDiscoveryAdapter`. Today candidates are operator-assisted (found on Alibaba.com by a person and imported); an automatic adapter needs an authorized integration, not yet available.
+2. **Candidate discovery** — an `AlibabaDiscoveryAdapter`. Candidates are operator-assisted (found on Alibaba.com by a person and imported) or discovered automatically through a third-party provider (Apify Actor; not an official Alibaba.com API; live use pending an access decision).
 3. **Visual comparison** — SigLIP 2 image embeddings shortlist candidates by cosine similarity (implemented locally, Base Patch16-384 by default); GPT-6.1 Sol compares reference and candidate photos pairwise and produces structured assessments (implemented; first live run pending).
 4. **Seller intelligence** — seller attributes from listing data are attached to each candidate.
 5. **Results** — ranked products with similarity explanations and seller information.

@@ -23,6 +23,8 @@ export interface VerificationReportEntry {
     classification: MatchClassification | null;
     confidence: "low" | "medium" | "high" | null;
     keyMatches: string[];
+    /** Partial matches on defining or supporting features (e.g. a different count of a repeated element). */
+    keyPartialMatches: string[];
     keyMismatches: string[];
     evidenceGaps: string[];
     summary: string | null;
@@ -102,6 +104,7 @@ export function buildVerificationReport(input: BuildReportInput): VerificationRe
         classification: r?.assessment?.classification ?? null,
         confidence: r?.assessment?.confidence ?? null,
         keyMatches: r ? features(r, (c, i) => c === "match" && i !== "minor") : [],
+        keyPartialMatches: r ? features(r, (c, i) => c === "partial_match" && i !== "minor") : [],
         keyMismatches: r ? features(r, (c, i) => c === "mismatch" && i !== "minor") : [],
         evidenceGaps: r?.assessment?.unverifiableFeatures ?? [],
         summary: r?.rawVerification?.summary ?? null,
@@ -178,7 +181,12 @@ export function renderVerificationReportMarkdown(r: VerificationReport): string 
     const v = e.verification;
     lines.push(`### ${e.marketplaceProductId ?? e.listingId}: ${cell(e.title)}`, "");
     if (v.summary) lines.push(v.summary, "");
-    lines.push(`- Key matches: ${list(v.keyMatches)}`, `- Key mismatches: ${list(v.keyMismatches)}`, `- Evidence gaps: ${list(v.evidenceGaps)}`);
+    lines.push(
+      `- Key matches: ${list(v.keyMatches)}`,
+      `- Key partial matches: ${list(v.keyPartialMatches)}`,
+      `- Key mismatches: ${list(v.keyMismatches)}`,
+      `- Evidence gaps: ${list(v.evidenceGaps)}`,
+    );
     if (v.error) lines.push(`- Problem: ${v.error}`);
     lines.push(`- Attempts recorded: ${v.attempts}${v.record ? ` (shown: ${v.record})` : ""}`, "");
   }

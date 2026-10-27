@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { importCuratedCandidates } from "../discovery/curated/curated-alibaba-adapter";
+import { candidateSetTag, importCuratedCandidates } from "../discovery/curated/curated-alibaba-adapter";
 import { PythonImageSimilarityRunner, type ImageSimilarityRunner } from "../shortlisting/embedding-client";
 import { EvidenceError, planListingImages, resolveReferenceImage } from "../shortlisting/evidence";
 import {
@@ -237,7 +237,8 @@ export async function runShortlistImagesCli(argv: string[], deps: ShortlistImage
     });
 
     if (values["no-save"] !== true) {
-      const base = join(outputDir, `${caseId}-${modelId.slice("google/".length)}`);
+      // Automated candidate sets get their own file, so the control set's report is never replaced.
+      const base = join(outputDir, `${caseId}-${modelId.slice("google/".length)}${candidateSetTag(imported)}`);
       await mkdir(outputDir, { recursive: true });
       await writeFile(`${base}.json`, `${JSON.stringify(shortlist, null, 2)}\n`);
       await writeFile(`${base}.md`, renderShortlistMarkdown(shortlist));

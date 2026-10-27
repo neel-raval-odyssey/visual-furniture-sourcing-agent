@@ -1,5 +1,12 @@
 import { createHash } from "node:crypto";
-import type { CandidateListing, DataProvenance, DataSourceKind, ListingImage, SupplierProfile } from "../../domain";
+import type {
+  AcquisitionMethod,
+  CandidateListing,
+  DataProvenance,
+  DataSourceKind,
+  ListingImage,
+  SupplierProfile,
+} from "../../domain";
 import type {
   AlibabaDiscoveryAdapter,
   DiscoveryProviderInfo,
@@ -76,6 +83,10 @@ export interface ImportedListingInfo {
 
 export interface CuratedImport {
   dataSource: DataSourceKind;
+  /** From capture.method: operator_assisted, or provider_api for automated discovery manifests. */
+  acquisitionMethod: AcquisitionMethod;
+  /** capture.provider of provider_api manifests (one per manifest), otherwise empty. */
+  providers: NonNullable<CandidateManifest["capture"]["provider"]>[];
   listings: CandidateListing[];
   suppliers: SupplierProfile[];
   info: ImportedListingInfo[];
@@ -183,6 +194,9 @@ export function importCuratedCandidates(manifests: readonly CandidateManifest[])
   const dataSource = manifests[0].dataSource;
   const references = new Set(manifests.map((m) => `${m.caseId}|${m.referenceImageId}|${m.fingerprintId}`));
   if (references.size > 1) throw new CandidateAssociationError("Manifests belong to different cases, references or fingerprints");
+  const methods = new Set(manifests.map((m) => m.capture.method));
+  if (methods.size > 1) throw new CandidateAssociationError("Cannot combine operator-assisted and provider_api manifests");
+  const acquisitionMethod = manifests[0].capture.method;
   const unfinished = manifests.findIndex((m) => m.capture.status !== "completed");
   if (unfinished !== -1) {
     throw new MissingCandidateInputError(
@@ -197,7 +211,11 @@ export function importCuratedCandidates(manifests: readonly CandidateManifest[])
   const skippedDuplicates: CuratedImport["skippedDuplicates"] = [];
 
   manifests.forEach((m, manifestIndex) => {
-    const base = { marketplace: "alibaba", dataSource, acquisitionMethod: "operator_assisted" } as const;
+    const base = { marketplace: "alibaba", dataSource, acquisitionMethod } as const;
+    const provider = m.capture.provider;
+    const providerSource = (runIds: string[]): Pick<DataProvenance, "providerSource"> =>
+      provider ? { providerSource: { providerId: provider.providerId, access: provider.access, runIds } } : {};
+    const allRunIds = provider ? [...new Set(provider.runs.map((r) => r.providerRunId))] : [];
     const supplierIds = new Map<string, string>();
     for (const s of m.suppliers) {
       const id = supplierIdFor(s, m);
@@ -213,12 +231,13 @@ export function importCuratedCandidates(manifests: readonly CandidateManifest[])
       }
       const id = listingIdFor(identity, dataSource);
       seen.set(identity, id);
-      const provenance: DataProvenance = { ...base, retrievedAt: c.capturedAt ?? (m.capture.capturedAt as string) };
+      const runIds = c.discoverySources ? [...new Set(c.discoverySources.map((d) => d.providerRunId))] : allRunIds;
+      const provenance: DataProvenance = { ...base, retrievedAt: c.capturedAt ?? (m.capture.capturedAt as string), ...providerSource(runIds) };
 
       const supplierId = c.supplierRef ? supplierIds.get(c.supplierRef) : undefined;
       if (c.supplierRef && supplierId && !suppliers.has(supplierId)) {
         const s = m.suppliers.find((x) => x.ref === c.supplierRef) as ManifestSupplier;
-        suppliers.set(supplierId, toSupplier(s, supplierId, { ...base, retrievedAt: m.capture.capturedAt as string }));
+        suppliers.set(supplierId, toSupplier(s, supplierId, { ...base, retrievedAt: m.capture.capturedAt as string, ...providerSource(allRunIds) }));
       }
       const listing = toListing(c, id, supplierId, provenance);
       listings.push(listing);
@@ -249,6 +268,8 @@ export function importCuratedCandidates(manifests: readonly CandidateManifest[])
     .reduce((a, b) => (Date.parse(b) > Date.parse(a) ? b : a));
   return {
     dataSource,
+    acquisitionMethod,
+    providers: manifests.flatMap((m) => (m.capture.provider ? [m.capture.provider] : [])),
     listings,
     suppliers: supplierList,
     info,
@@ -310,15 +331,26 @@ export class CuratedAlibabaDiscoveryAdapter implements AlibabaDiscoveryAdapter {
       providerId: CURATED_PROVIDER_ID,
       marketplace: "alibaba",
       dataSource: imported.dataSource,
-      acquisitionMethod: "operator_assisted",
+      acquisitionMethod: imported.acquisitionMethod,
     };
     return {
       listings: structuredClone(listings),
       suppliers: structuredClone(suppliers),
       provider,
       retrievedAt: imported.capturedAt,
-      // This application applied no query or category filter: the operator searched on Alibaba.com.
-      queriesUsed: [],
+      // The saved queries of a provider_api manifest; an operator-assisted manifest records none applied by this application.
+      queriesUsed: imported.acquisitionMethod === "provider_api" ? imported.queriesTyped : [],
     };
   }
+}
+
+/**
+ * Suffix that keeps reports from automated (provider_api) candidate sets apart
+ * from the operator-assisted control set of the same case: "" for
+ * operator-assisted imports, "-auto-<first provider run id>" otherwise.
+ */
+export function candidateSetTag(imported: Pick<CuratedImport, "acquisitionMethod" | "providers">): string {
+  if (imported.acquisitionMethod !== "provider_api") return "";
+  const runId = imported.providers[0]?.runs[0]?.providerRunId ?? "unknown";
+  return `-auto-${runId.replace(/[^A-Za-z0-9-]/g, "")}`;
 }

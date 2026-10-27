@@ -20,7 +20,15 @@ import { canonicalUrl, checkMarketplaceUrl, productIdFromListingUrl } from "./ma
 const slug = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, "Use lower-case letters, digits and hyphens");
 const maybe = <T extends z.ZodType>(schema: T) => schema.nullable().optional();
 
-export const CAPTURE_TOOLS = ["alibaba_lens", "alibaba_image_search", "alibaba_keyword_search", "other"] as const;
+export const CAPTURE_TOOLS = [
+  "alibaba_lens",
+  "alibaba_image_search",
+  "alibaba_keyword_search",
+  "other",
+  /** Searches run by this application through a discovery provider (capture.method "provider_api"). */
+  "provider_image_search",
+  "provider_keyword_search",
+] as const;
 export const captureToolSchema = z.enum(CAPTURE_TOOLS);
 
 /** Relative path to a locally saved screenshot or image, resolved against the manifest's folder. */
@@ -63,6 +71,26 @@ export const manifestSupplierSchema = z.strictObject({
   notes: maybe(z.string()),
 });
 
+/** One provider search that returned a candidate (provider_api manifests only). */
+export const discoverySourceSchema = z.strictObject({
+  mode: z.enum(["image", "keyword"]),
+  providerRunId: nonEmptyStringSchema,
+  /** The keyword query, or null for image search. */
+  query: z.string().nullable(),
+  /** 1-based position in the provider's results, when reported. */
+  position: z.int().positive().nullable(),
+  /** Whether the provider marked the result as a sponsored placement; null when not reported. */
+  sponsored: z.boolean().nullable(),
+});
+
+/** A quantity price break as reported by the provider. */
+export const priceTierSchema = z.strictObject({
+  minQuantity: z.int().positive(),
+  maxQuantity: z.int().positive().nullable(),
+  price: z.number().nonnegative(),
+  currency: z.string().regex(/^[A-Z]{3}$/).nullable(),
+});
+
 export const manifestCandidateSchema = z.strictObject({
   listingUrl: nonEmptyStringSchema,
   marketplaceProductId: maybe(nonEmptyStringSchema),
@@ -77,7 +105,35 @@ export const manifestCandidateSchema = z.strictObject({
   /** Overrides capture.capturedAt for this candidate. */
   capturedAt: maybe(isoTimestampSchema),
   foundWith: maybe(captureToolSchema),
+  /** provider_api: every provider search that returned this listing. */
+  discoverySources: maybe(z.array(discoverySourceSchema).min(1)),
+  /** Quantity price breaks as reported (not used for ranking). */
+  priceTiers: maybe(z.array(priceTierSchema)),
   notes: maybe(z.string()),
+});
+
+/** Who ran the search, for capture.method "provider_api". */
+export const captureProviderSchema = z.strictObject({
+  providerId: nonEmptyStringSchema,
+  /** e.g. "apify". */
+  service: nonEmptyStringSchema,
+  /** e.g. "scrapewise/alibaba-com-scraper". */
+  source: nonEmptyStringSchema,
+  /** A third-party service is not an official Alibaba.com API. */
+  access: z.enum(["official_api", "third_party_service"]),
+  runs: z
+    .array(
+      z.strictObject({
+        mode: z.enum(["image", "keyword"]),
+        providerRunId: nonEmptyStringSchema,
+        status: nonEmptyStringSchema,
+        startedAt: isoTimestampSchema.nullable(),
+        finishedAt: isoTimestampSchema.nullable(),
+        /** Charge reported by the provider, when available. */
+        chargedUsd: z.number().nonnegative().nullable(),
+      }),
+    )
+    .min(1),
 });
 
 export const candidateManifestSchema = z
@@ -93,12 +149,14 @@ export const candidateManifestSchema = z
     capture: z.strictObject({
       /** "not_started": template not filled in yet. "completed": the operator finished searching. */
       status: z.enum(["not_started", "completed"]),
-      method: z.literal("operator_assisted"),
+      /** operator_assisted: found by a person. provider_api: searched by this application through capture.provider. */
+      method: z.enum(["operator_assisted", "provider_api"]),
       capturedAt: isoTimestampSchema.nullable(),
       tools: z.array(captureToolSchema),
       /** Text queries the operator typed into Alibaba.com, if any. */
       queriesTyped: z.array(nonEmptyStringSchema),
       notes: maybe(z.string()),
+      provider: maybe(captureProviderSchema),
     }),
     suppliers: z.array(manifestSupplierSchema),
     candidates: z.array(manifestCandidateSchema),
@@ -120,6 +178,15 @@ export const candidateManifestSchema = z
     if (m.dataSource === "live" && m.capture.status === "completed" && m.capture.tools.length === 0) {
       issue(["capture", "tools"], "Record which Alibaba.com tool(s) were used");
     }
+    const providerTools = m.capture.tools.filter((t) => t.startsWith("provider_"));
+    if (m.capture.method === "provider_api") {
+      if (!m.capture.provider) issue(["capture", "provider"], 'Required when method is "provider_api"');
+      if (providerTools.length !== m.capture.tools.length) issue(["capture", "tools"], "provider_api manifests may only list provider_* tools");
+    } else {
+      if (m.capture.provider) issue(["capture", "provider"], 'Only allowed when method is "provider_api"');
+      if (providerTools.length) issue(["capture", "tools"], "provider_* tools require method \"provider_api\"");
+    }
+    const runIds = new Set(m.capture.provider?.runs.map((r) => r.providerRunId) ?? []);
 
     const supplierRefs = new Set<string>();
     const profiles = new Map<string, number>();
@@ -148,6 +215,12 @@ export const candidateManifestSchema = z
 
       c.images.forEach((img, j) => {
         if ("url" in img) url(img.url, "listing_image", ["candidates", i, "images", j, "url"]);
+      });
+      if (c.discoverySources && m.capture.method !== "provider_api") {
+        issue(["candidates", i, "discoverySources"], 'Only allowed when capture.method is "provider_api"');
+      }
+      c.discoverySources?.forEach((d, j) => {
+        if (!runIds.has(d.providerRunId)) issue(["candidates", i, "discoverySources", j, "providerRunId"], "Not one of capture.provider.runs");
       });
       if (c.supplierRef && !supplierRefs.has(c.supplierRef)) {
         issue(["candidates", i, "supplierRef"], `No supplier with ref "${c.supplierRef}"`);

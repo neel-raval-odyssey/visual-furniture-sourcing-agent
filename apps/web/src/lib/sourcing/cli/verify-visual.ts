@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { importCuratedCandidates } from "../discovery/curated/curated-alibaba-adapter";
+import { candidateSetTag, importCuratedCandidates } from "../discovery/curated/curated-alibaba-adapter";
 import type { CandidateListing } from "../domain";
 import { EvidenceError, planListingImages, resolveReferenceImage } from "../shortlisting/evidence";
 import { loadSavedShortlist, ShortlistFileError, type SavedShortlist } from "../shortlisting/shortlist-schema";
@@ -272,7 +272,8 @@ export async function runVerifyVisualCli(argv: string[], deps: VerifyVisualCliDe
         model,
         instructionsVersion: VISUAL_VERIFICATION_INSTRUCTIONS_VERSION,
       });
-      const base = join(outputDir, caseId, "report");
+      // Automated candidate sets get their own report file, so the control set's report is never replaced.
+      const base = join(outputDir, caseId, `report${candidateSetTag(imported)}`);
       await mkdir(dirname(base), { recursive: true });
       await writeFile(`${base}.json`, `${JSON.stringify(report, null, 2)}\n`);
       await writeFile(`${base}.md`, renderVerificationReportMarkdown(report));

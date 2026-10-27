@@ -10,7 +10,7 @@ vfsa_vision/
   similarity.py  L2 normalization, cosine similarity, deterministic rank key (pure Python)
   protocol.py    strict validation of the JSON request
   model.py       checkpoint resolution (cache only), device selection, SigLIP 2 image embeddings
-  cli.py         `embed`, `environment` and `download` commands
+  cli.py         `embed`, `environment`, `download` and `convert` commands
 tests/           pytest suite: synthetic images, mocked model, network blocked
 ```
 
@@ -58,6 +58,17 @@ Reports:
 ```
 
 No model weights are needed; network connections fail the tests.
+
+## Converting image evidence (AVIF)
+
+```sh
+.venv/bin/python -m vfsa_vision convert --input /abs/in.avif --sha256 <hex> --output /abs/out.png
+```
+
+This command is used by `discover:marketplace` for AVIF listing images.
+- It decodes a hash-checked local image with the same safe loader as `embed`.
+- It writes a new PNG, never overwriting an existing file, and leaves the original unchanged.
+- It makes no network request and loads no model.
 
 ## Devices
 

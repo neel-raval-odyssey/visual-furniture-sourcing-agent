@@ -102,6 +102,8 @@ The synthetic example is [`evals/candidates/synthetic/syn-bed-001.json`](../eval
 
 ## 6. Replacing the curated adapter with an authorized provider
 
+> Since P1-004, automated discovery through a third-party provider exists alongside this workflow; it writes the same manifest format with `capture.method: "provider_api"`. See [automated-marketplace-discovery.md](automated-marketplace-discovery.md). An official Alibaba.com integration would still follow the steps below.
+
 1. **Establish access in writing:** a documented Alibaba.com API or partner agreement that permits buyer-side product search (keyword and/or image), plus its rate limits, data-retention and display terms.
 2. **Implement it as another `AlibabaDiscoveryAdapter`:**
    - It maps the provider's response to `CandidateListing` / `SupplierProfile`, sets `dataSource: "live"` and `acquisitionMethod: "provider_api"`, and reports the queries and category it actually sent.

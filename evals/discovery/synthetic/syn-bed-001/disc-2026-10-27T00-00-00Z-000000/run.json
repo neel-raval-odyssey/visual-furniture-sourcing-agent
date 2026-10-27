@@ -1,0 +1,77 @@
+{
+  "recordType": "marketplace_discovery_run",
+  "schemaVersion": 1,
+  "discoveryId": "disc-2026-10-27T00-00-00Z-000000",
+  "caseId": "syn-bed-001",
+  "dataSource": "mock",
+  "createdAt": "2026-10-27T00:00:00.000Z",
+  "updatedAt": "2026-10-27T00:01:00.000Z",
+  "status": "in_progress",
+  "provider": {
+    "providerId": "apify-alibaba-discovery",
+    "service": "apify",
+    "source": "scrapewise/alibaba-com-scraper",
+    "access": "third_party_service"
+  },
+  "reference": {
+    "referenceImageId": "ref-local-0ef9571d83494cd6",
+    "fingerprintId": "fp-synthetic-syn-bed-001",
+    "sha256": "a5e32f29846e6c0cc9346cd9e9bc63f3198cdecf65c134490df3a337e7f463c8"
+  },
+  "request": {
+    "mode": "hybrid",
+    "maxResults": 10,
+    "costCapUsd": 1,
+    "imageTransport": {
+      "kind": "url",
+      "url": "https://photos.example/synthetic-reference.png"
+    },
+    "downloadImages": false,
+    "imagesPerListing": 1
+  },
+  "runs": [
+    {
+      "mode": "image",
+      "state": "succeeded",
+      "maxResults": 10,
+      "costCapUsd": 0.5,
+      "estimatedUsd": 0.004,
+      "queries": [],
+      "providerRunId": "SyntheticRunImage01",
+      "datasetId": "SyntheticDatasetImg1",
+      "startRequestedAt": "2026-10-27T00:00:00.000Z",
+      "startedAt": "2026-10-27T00:00:01.000Z",
+      "finishedAt": "2026-10-27T00:01:00.000Z",
+      "statusMessage": null,
+      "chargedEventCounts": null,
+      "usageTotalUsd": null,
+      "error": null,
+      "snapshotFile": "provider-response-image.json",
+      "itemCount": 11
+    },
+    {
+      "mode": "keyword",
+      "state": "succeeded",
+      "maxResults": 10,
+      "costCapUsd": 0.5,
+      "estimatedUsd": 0.01,
+      "queries": [
+        "dark brown panel bed arched headboard"
+      ],
+      "providerRunId": "SyntheticRunKeyword1",
+      "datasetId": "SyntheticDatasetKw01",
+      "startRequestedAt": "2026-10-27T00:00:00.000Z",
+      "startedAt": "2026-10-27T00:00:01.000Z",
+      "finishedAt": "2026-10-27T00:01:00.000Z",
+      "statusMessage": null,
+      "chargedEventCounts": null,
+      "usageTotalUsd": null,
+      "error": null,
+      "snapshotFile": "provider-response-keyword.json",
+      "itemCount": 2
+    }
+  ],
+  "storageUpload": null,
+  "manifestFile": null,
+  "summaryFile": null
+}

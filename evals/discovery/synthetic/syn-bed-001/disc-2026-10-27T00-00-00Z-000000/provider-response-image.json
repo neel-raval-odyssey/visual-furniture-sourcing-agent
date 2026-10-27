@@ -1,0 +1,371 @@
+{
+  "recordType": "provider_response_snapshot",
+  "schemaVersion": 1,
+  "dataSource": "mock",
+  "source": "apify:scrapewise/alibaba-com-scraper",
+  "mode": "image",
+  "providerRunId": "SyntheticRunImage01",
+  "datasetId": "SyntheticDatasetImg1",
+  "finishedAt": "2026-10-27T00:01:00.000Z",
+  "fetchedAt": "2026-10-27T00:01:05.000Z",
+  "itemLimit": 50,
+  "truncated": false,
+  "items": [
+    {
+      "type": "product",
+      "productId": "1000000000101",
+      "title": "[SYNTHETIC] Arched panel bed 101",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000101.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000101-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000101-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000101-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 1,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 101 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier101.alibaba.example"
+      }
+    },
+    {
+      "type": "product",
+      "productId": "1000000000102",
+      "title": "[SYNTHETIC] Arched panel bed 102",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000102.html?spm=tracking",
+      "priceMin": null,
+      "priceMax": null,
+      "currency": null,
+      "priceTiers": null,
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000102-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000102-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000102-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 2,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 102 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier102.alibaba.example"
+      }
+    },
+    {
+      "type": "product",
+      "productId": "1000000000103",
+      "title": "[SYNTHETIC] Arched panel bed 103",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000103.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": null,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000103-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000103-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000103-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 3,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": null
+    },
+    {
+      "type": "product",
+      "productId": "1000000000104",
+      "title": "[SYNTHETIC] Arched panel bed 101",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000104.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000104-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000104-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000104-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 4,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Name-only Trading Co.",
+        "verified": false
+      }
+    },
+    {
+      "type": "product",
+      "productId": "1000000000101",
+      "title": "[SYNTHETIC] Arched panel bed 101",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000101.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000101-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000101-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000101-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 5,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 101 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier101.alibaba.example"
+      }
+    },
+    {
+      "type": "product",
+      "productId": "1000000000105",
+      "title": "[SYNTHETIC] Arched panel bed 105",
+      "url": "https://www.alibaba.com/product-detail/Lookalike_1000000000105.html",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000105-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000105-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000105-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 6,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 105 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier105.alibaba.example"
+      }
+    },
+    {
+      "type": "product",
+      "productId": "1000000000106",
+      "title": "[SYNTHETIC] Arched panel bed 106",
+      "url": "https://www.alibaba.example/product-detail/Mismatch_1000000000999.html",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000106-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000106-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000106-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 7,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 106 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier106.alibaba.example"
+      }
+    },
+    {
+      "type": "product",
+      "productId": "1000000000107",
+      "title": "   ",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000107.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": "//img.alibaba.example/kf/1000000000107-primary.jpg",
+      "images": [
+        "https://img.alibaba.example/kf/1000000000107-primary.jpg",
+        "https://img.alibaba.example/kf/1000000000107-side.jpg",
+        "https://images.other-host.example/x.jpg"
+      ],
+      "isAd": false,
+      "position": 8,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 107 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier107.alibaba.example"
+      }
+    },
+    {
+      "type": "product",
+      "productId": "1000000000108",
+      "title": "[SYNTHETIC] Arched panel bed 108",
+      "url": "https://www.alibaba.example/product-detail/Arched-Panel-Bed_1000000000108.html?spm=tracking",
+      "priceMin": 120,
+      "priceMax": 180,
+      "currency": "usd",
+      "priceTiers": [
+        {
+          "minQuantity": 2,
+          "maxQuantity": 49,
+          "price": 180
+        },
+        {
+          "minQuantity": 50,
+          "maxQuantity": null,
+          "price": 120
+        }
+      ],
+      "minOrderQuantity": 2,
+      "unit": "piece",
+      "imageUrl": null,
+      "images": [],
+      "isAd": true,
+      "position": 9,
+      "searchedAs": "image",
+      "scrapedAt": "2026-10-27T10:00:00.000Z",
+      "supplier": {
+        "companyName": "[SYNTHETIC] Supplier 108 Furniture Co., Ltd.",
+        "country": "CN",
+        "goldSupplierYears": 4,
+        "verified": true,
+        "tradeAssurance": true,
+        "responseRate": "92%",
+        "url": "https://supplier108.alibaba.example"
+      }
+    },
+    {
+      "type": "error",
+      "errorCode": "BLOCKED",
+      "error": "Request was refused; this row is not a product"
+    },
+    "not an object"
+  ]
+}

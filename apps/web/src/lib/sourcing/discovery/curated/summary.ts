@@ -18,7 +18,8 @@ export interface CuratedRunSummary {
     providerId: string;
     method: string;
     /** Always false: candidates were found by a person on Alibaba.com. */
-    searchPerformedByApplication: false;
+    /** True for provider_api manifests: this application ran the search through a provider. */
+    searchPerformedByApplication: boolean;
     tools: string[];
     queriesTyped: string[];
     capturedAt: string;
@@ -62,7 +63,7 @@ export function summarizeCuratedRun(run: SourcingPipelineResult, imported: Curat
       marketplace: run.discovery.provider.marketplace,
       providerId: run.discovery.provider.providerId,
       method: run.discovery.provider.acquisitionMethod ?? "unrecorded",
-      searchPerformedByApplication: false,
+      searchPerformedByApplication: imported.acquisitionMethod === "provider_api",
       tools: imported.tools,
       queriesTyped: imported.queriesTyped,
       capturedAt: run.discovery.retrievedAt,
@@ -110,12 +111,14 @@ export function renderCuratedRunSummary(s: CuratedRunSummary): string {
   lines.push(`# Candidate import: ${s.caseId}`);
   lines.push(`Reference ${s.reference.referenceImageId}, fingerprint ${s.reference.fingerprintId} (${s.reference.fingerprintSource.dataSource}${s.reference.fingerprintSource.modelId ? `, ${s.reference.fingerprintSource.modelId}` : ""}): ${s.reference.category}${s.reference.subtype ? ` / ${s.reference.subtype}` : ""}`);
   lines.push(
-    `Acquisition: ${s.acquisition.method} via ${s.acquisition.providerId} (${s.acquisition.marketplace}); captured ${s.acquisition.capturedAt}; tools: ${s.acquisition.tools.join(", ") || "none recorded"}. This application performed no search.`,
+    `Acquisition: ${s.acquisition.method} via ${s.acquisition.providerId} (${s.acquisition.marketplace}); captured ${s.acquisition.capturedAt}; tools: ${s.acquisition.tools.join(", ") || "none recorded"}. ${s.acquisition.searchPerformedByApplication ? "Searched by this application through a discovery provider (see the manifest's capture.provider)." : "This application performed no search."}`,
   );
   lines.push(
     `Candidates: ${s.counts.candidates}; suppliers: ${s.counts.suppliers}; duplicates skipped: ${s.counts.skippedDuplicates}; not returned because of --limit: ${s.counts.excludedByLimit}.`,
   );
-  if (s.counts.candidates === 0) lines.push("The operator recorded a completed search with no candidates.");
+  if (s.counts.candidates === 0) {
+    lines.push(s.acquisition.searchPerformedByApplication ? "The provider search completed with no candidates." : "The operator recorded a completed search with no candidates.");
+  }
   s.candidates.forEach((c, i) => {
     lines.push("");
     lines.push(`${i + 1}. ${c.title}`);

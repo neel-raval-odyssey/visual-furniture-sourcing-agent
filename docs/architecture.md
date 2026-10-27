@@ -1,6 +1,6 @@
 # Architecture
 
-Planned design. Nothing below is implemented beyond the web app shell. Model choices are proposals.
+Design of the sourcing system. Implemented: image understanding (GPT-6 Luna), operator-assisted and provider-based candidate intake, SigLIP 2 shortlisting, GPT-6.1 Sol verification and offline orchestration (`pnpm source:auto`). Not yet available: authorized live marketplace acquisition, a production ranking policy and a user-facing UI.
 
 ## Pipeline
 
@@ -63,6 +63,7 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
   - `VisualMatchAssessment`: `designSimilarityIndex` (0–100, not a calibrated probability) is separate from `confidence` (`low | medium | high`). Classifications describe visual design only, not manufacturer or SKU identity.
   - `RankedSourcingResult`: assessment, supplier and rank are optional, so discovery output can be represented before matching runs.
 - `discovery/`: the `AlibabaDiscoveryAdapter` interface (`discoverCandidates(request) → result`). Discovery returns candidates, suppliers and provenance only. It never scores similarity or ranks results.
+- `discovery/providers/apify/`: `ApifyAlibabaDiscoveryAdapter` (provider `apify-alibaba-discovery`), automated discovery through the Apify Actor `scrapewise/alibaba-com-scraper`, a third-party scraper and not an official Alibaba.com API. Capped runs per search mode, a `run.json` journal for resume and replay, strict row validation, and normalization into a `provider_api` candidate manifest that the curated importer reads. `discovery/images/` caches provider image URLs under strict network rules. See [automated-marketplace-discovery.md](automated-marketplace-discovery.md).
 - `discovery/curated/`: `CuratedAlibabaDiscoveryAdapter` imports operator-recorded Alibaba.com candidates from a validated private manifest. See [alibaba-candidate-intake.md](alibaba-candidate-intake.md).
   - It performs no search and no network request.
   - Provider `curated-alibaba`, `acquisitionMethod: "operator_assisted"`, `queriesUsed: []`.
@@ -70,6 +71,7 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
 - `understanding/saved/`: `SavedFingerprintImageUnderstandingService` replays a fingerprint from a saved `analyze:image` run record, so a reference can be reused without another model call.
 - `verification/UnassessedVisualVerificationService`: returns no assessments, so real candidates stay "not assessed" until detailed visual verification exists.
 - `verification/openai/`: `OpenAIVisualVerificationService` (GPT-6.1 Sol), implementing `VisualVerificationService`. Pairwise requests with only the two images and the fingerprint's visual observations; strict raw schema, consistency checks and adapter-owned provenance; a `PaidRequestBudget`; private run records and an offline report. `pipeline/verified.ts` composes it with the curated path. See [visual-verification.md](visual-verification.md).
+- `orchestration/`: `runOrchestration` composes the saved fingerprint, a candidate source (curated manifest or saved discovery run), image-evidence checks, SigLIP 2 shortlist reuse or local computation, and saved Sol records into one `sourcing_result` (`pnpm source:auto`). Resumable journal, input identity, explicit verification-selection policy, ordering by the Sol index only. It makes no external or paid request. See [automated-sourcing-orchestration.md](automated-sourcing-orchestration.md).
 - `shortlisting/`: retrieval-stage visual shortlist (`pnpm shortlist:images`). See [visual-shortlisting.md](visual-shortlisting.md).
   - `evidence.ts` resolves the reference photograph (hash-checked against the saved run) and each listing's local images (confined to `<candidates>/<case>/`).
   - `embedding-client.ts` runs `python -m vfsa_vision embed` as a child process with a JSON protocol (`protocol.ts`, strictly validated and cross-checked against the request).
@@ -156,9 +158,10 @@ ReferenceImage → ReferenceImageContentProvider.load → ImageContent (bytes, M
 
 **Implemented vs. planned:**
 - Image understanding has a real provider implementation, run locally through the CLI. The pipeline still wires the mock by default.
-- Discovery has a real, operator-assisted intake path (`pnpm source:candidates`). The mock adapter remains for synthetic runs, and there is no automatic Alibaba.com search.
+- Discovery has a real, operator-assisted intake path (`pnpm source:candidates`) and an automated provider path (`pnpm discover:marketplace`, third-party provider, not yet run live; access and data-use approval unresolved). The mock adapter remains for synthetic runs.
 - Visual shortlisting is real: local SigLIP 2 embeddings rank recorded candidates by cosine similarity, as a separate retrieval-stage result.
-- Detailed visual verification has a real GPT-6.1 Sol implementation (`pnpm verify:visual`), not yet run live. Without a Sol result, real candidates stay "not assessed"; the synthetic stub remains for demos. Ranking is provisional.
+- Detailed visual verification has a real GPT-6.1 Sol implementation (`pnpm verify:visual`), run on the four Ettrick candidates. Without a Sol result, real candidates stay "not assessed"; the synthetic stub remains for demos.
+- Offline orchestration (`pnpm source:auto`) assembles a consolidated result ordered by the Sol index; the `SourcingPipeline` provisional ranking remains a placeholder.
 - There is no live end-to-end Alibaba sourcing workflow yet.
 - Each real integration will also need an adapter that maps raw model or provider output into the domain types, setting provenance itself, before the pipeline's validation runs.
 - Planned: an authorized Alibaba integration (discovery) and a production ranking policy.
@@ -172,10 +175,11 @@ ReferenceImage → ReferenceImageContentProvider.load → ImageContent (bytes, M
 | Image embeddings   | Python (`services/vision`), PyTorch, Hugging Face Transformers, SigLIP 2; local CLI component | Implemented (shortlisting); no server |
 | Database           | PostgreSQL (searches, candidates, results)     | Planned  |
 | Object storage     | S3-compatible (reference and candidate images) | Planned  |
-| Alibaba adapter    | Interface, mock, and operator-assisted curated intake | Automatic search blocked on an authorized integration |
+| Alibaba adapter    | Interface, mock, operator-assisted curated intake, and an Apify third-party provider adapter | Provider adapter implemented; live use awaiting an access decision and first authorized run |
 | Sourcing pipeline  | TypeScript orchestrator; synthetic and curated (saved fingerprint + operator candidates) compositions | Implemented; verified composition available (Sol), not run live yet |
 | Image understanding | OpenAI Responses API (GPT-6 Luna), local CLI | Implemented |
-| Visual verification | OpenAI Responses API (GPT-6.1 Sol), local CLI | Implemented; first live run pending |
+| Visual verification | OpenAI Responses API (GPT-6.1 Sol), local CLI | Implemented; run on Ettrick |
+| Orchestration      | TypeScript (`orchestration/`), `pnpm source:auto` | Implemented offline; live acquisition blocked on authorization |
 
 ## Open decisions
 
