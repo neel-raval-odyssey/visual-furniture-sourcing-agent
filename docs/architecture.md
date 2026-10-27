@@ -1,6 +1,6 @@
 # Architecture
 
-Design of the sourcing system. Implemented: image understanding (GPT-6 Luna), operator-assisted and provider-based candidate intake, SigLIP 2 shortlisting, GPT-6.1 Sol verification and offline orchestration (`pnpm source:auto`). Not yet available: authorized live marketplace acquisition, a production ranking policy and a user-facing UI.
+Design of the sourcing system. Implemented: image understanding (GPT-6 Luna), operator-assisted and provider-based candidate intake, SigLIP 2 shortlisting, GPT-6.1 Sol verification and offline orchestration (`pnpm source:auto`). A local web workspace (`pnpm dev:local`) presents saved results. Not yet available: authorized live marketplace acquisition, a production ranking policy, and a deployable multi-user application.
 
 ## Pipeline
 
@@ -71,6 +71,7 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
 - `understanding/saved/`: `SavedFingerprintImageUnderstandingService` replays a fingerprint from a saved `analyze:image` run record, so a reference can be reused without another model call.
 - `verification/UnassessedVisualVerificationService`: returns no assessments, so real candidates stay "not assessed" until detailed visual verification exists.
 - `verification/openai/`: `OpenAIVisualVerificationService` (GPT-6.1 Sol), implementing `VisualVerificationService`. Pairwise requests with only the two images and the fingerprint's visual observations; strict raw schema, consistency checks and adapter-owned provenance; a `PaidRequestBudget`; private run records and an offline report. `pipeline/verified.ts` composes it with the curated path. See [visual-verification.md](visual-verification.md).
+- `ui/` and `apps/web/src/app/sourcing/`: the local web workspace. Server-only data access over the saved records (`result.json` validated by `orchestration/result-schema.ts`), a hash-checked evidence-image route that resolves ids through records rather than paths, private upload staging, and offline runs through `runOrchestration`. Local-only guard: an opt-in flag, never in production, loopback Host, and a same-origin check on mutations. See [visual-sourcing-web-experience.md](visual-sourcing-web-experience.md).
 - `orchestration/`: `runOrchestration` composes the saved fingerprint, a candidate source (curated manifest or saved discovery run), image-evidence checks, SigLIP 2 shortlist reuse or local computation, and saved Sol records into one `sourcing_result` (`pnpm source:auto`). Resumable journal, input identity, explicit verification-selection policy, ordering by the Sol index only. It makes no external or paid request. See [automated-sourcing-orchestration.md](automated-sourcing-orchestration.md).
 - `shortlisting/`: retrieval-stage visual shortlist (`pnpm shortlist:images`). See [visual-shortlisting.md](visual-shortlisting.md).
   - `evidence.ts` resolves the reference photograph (hash-checked against the saved run) and each listing's local images (confined to `<candidates>/<case>/`).
@@ -171,7 +172,7 @@ ReferenceImage → ReferenceImageContentProvider.load → ImageContent (bytes, M
 
 | Component          | Technology                                     | Status   |
 | ------------------ | ---------------------------------------------- | -------- |
-| Web app            | Next.js (App Router), TypeScript, Tailwind CSS | Shell    |
+| Web app            | Next.js (App Router), TypeScript, Tailwind CSS | Local sourcing workspace (`/sourcing`); local-only, no auth |
 | Image embeddings   | Python (`services/vision`), PyTorch, Hugging Face Transformers, SigLIP 2; local CLI component | Implemented (shortlisting); no server |
 | Database           | PostgreSQL (searches, candidates, results)     | Planned  |
 | Object storage     | S3-compatible (reference and candidate images) | Planned  |

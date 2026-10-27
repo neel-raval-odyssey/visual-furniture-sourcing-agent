@@ -1,11 +1,12 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Visual Furniture Sourcing Agent",
-  description:
-    "Find Alibaba listings that match a reference furniture photograph, ranked by design similarity.",
+  title: { default: "Visual Furniture Sourcing", template: "%s · Visual Furniture Sourcing" },
+  description: "Find furniture designs across global suppliers using visual intelligence.",
 };
+
+export const viewport: Viewport = { themeColor: "#faf8f4" };
 
 export default function RootLayout({
   children,
@@ -14,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="bg-stone-50 text-stone-900 antialiased">{children}</body>
+      <body className="min-h-screen bg-ivory text-ink antialiased">{children}</body>
     </html>
   );
 }

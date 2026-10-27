@@ -1,1 +1,62 @@
 @import "tailwindcss";
+
+/*
+ * Sourcing workspace design tokens: warm ivory surfaces, graphite type, one
+ * restrained walnut accent, and status colours that always pair with text and
+ * an icon (never colour alone).
+ */
+@theme {
+  --color-ivory: #faf8f4;
+  --color-paper: #fffdf9;
+  --color-sand: #f2ede5;
+  --color-line: #e4ddd1;
+  --color-line-strong: #cfc6b7;
+  --color-ink: #1e1c19;
+  --color-ink-soft: #3d3933;
+  --color-muted: #6c665d;
+  --color-accent: #8a5a32;
+  --color-accent-soft: #f3e8dc;
+  --color-ok: #3c6a4e;
+  --color-ok-soft: #e6efe8;
+  --color-warn: #8f5e14;
+  --color-warn-soft: #f7ecd9;
+  --color-bad: #9b3b2b;
+  --color-bad-soft: #f6e3df;
+  --color-info: #3f5470;
+  --color-info-soft: #e5eaf1;
+
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ivory font-sans text-ink antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+dialog::backdrop {
+  background: rgb(30 28 25 / 0.82);
+}
