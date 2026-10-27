@@ -41,7 +41,7 @@ All P1-006 deep links under `/sourcing/references/…` are unchanged.
 | `references/[caseId]/page.tsx` | The saved Luna fingerprint (structure, appearance and distinctive features, each labelled with its certainty), runs, next action |
 | `references/[caseId]/runs/[runId]/page.tsx` | Results: overview counts; the closest verified design next to the reference; verified candidates in Sol order (with an optional SigLIP retrieval order via `?sort=retrieval`); unverified candidates listed separately; the recorded stage timeline; warnings, follow-ups and model provenance |
 | `…/candidates/[listingId]/page.tsx` | Comparison: reference and candidate photos (full-size view, no overlays), grouped Sol evidence, product and supplier facts |
-| `uploads/[uploadId]/page.tsx` | A staged upload: "Photo saved successfully. Image analysis is the next step.", with the technical status collapsed |
+| `uploads/[uploadId]/page.tsx` | A staged upload and its analysis: ready, confirming, analyzing, analyzed (plain-English furniture summary), not identified, failed or uncertain |
 | `layout.tsx` | The shell and the local-access explanation |
 
 **API routes** (`apps/web/src/app/api/sourcing/`, Node runtime):
@@ -50,6 +50,7 @@ All P1-006 deep links under `/sourcing/references/…` are unchanged.
 |---|---|
 | `GET evidence/[...parts]` | Private images by evidence id |
 | `POST uploads` | Stage a photo |
+| `GET`/`POST uploads/[uploadId]/analysis` | Analysis status (read-only); one confirmed GPT-6 Luna analysis, or finishing an already-paid save |
 | `POST runs` | Offline run from saved evidence |
 | `GET runs/[caseId]/[runId]` | Stage states, for bounded polling |
 
@@ -143,7 +144,7 @@ Bind the dev server to loopback (`pnpm dev:local` does).
   - a fresh id and folder each time, with exclusive writes, so nothing is ever overwritten.
 - **What it doesn't do:** send anything anywhere, run Luna, or search.
 
-The upload page says **"Photo saved successfully. Image analysis is the next step."** and states that nothing has been analysed or searched; the approvals still needed (and the record's status, `awaiting_image_understanding`) are under "Technical details". AVIF is not accepted for upload: the local conversion path lives in `services/vision` and is used only for discovered listing images.
+The upload page says **"Photo saved successfully"** and offers **Analyze this photo**: one explicitly confirmed GPT-6 Luna request that turns the photo into a saved reference (P1-007, see [new-photo-image-understanding.md](new-photo-image-understanding.md)). `upload.json` itself is never changed; its `awaiting_image_understanding` status is the staging status, and the analysis state lives in the upload's attempt journal. AVIF is not accepted for upload: the local conversion path lives in `services/vision` and is used only for discovered listing images.
 
 ## 8. Offline sourcing from the UI
 
@@ -188,13 +189,15 @@ The workspace states: "Automated marketplace discovery is awaiting authorized pr
 ## 12. No automatic charges
 
 **No route can:**
-- call GPT-6 Luna or GPT-6.1 Sol;
+- call GPT-6.1 Sol;
 - start provider discovery;
 - download marketplace images.
 
+**One exception, explicitly confirmed:** `POST /api/sourcing/uploads/<id>/analysis` with `{"action":"analyze","attemptKey":…}` sends one GPT-6 Luna request for one staged photo, after the user confirms a dialog that explains the charge. It is reserved durably, never retried and never repeated automatically ([new-photo-image-understanding.md](new-photo-image-understanding.md)).
+
 **Also guaranteed:**
-- **Rendering is read-only:** page rendering only reads files, and never runs a model.
-- **Keys are never used:** the presence of `OPENAI_API_KEY` or `APIFY_TOKEN` is never treated as permission. Tests stub both, and assert that `fetch` is never called.
+- **Rendering is read-only:** page rendering only reads files, and never runs a model; the analysis status endpoint is read-only too.
+- **Keys are not permission:** the presence of `OPENAI_API_KEY` or `APIFY_TOKEN` never starts anything. Tests stub both, and assert that `fetch` is never called.
 
 ## 13. Testing and QA
 
@@ -233,7 +236,7 @@ The workspace states: "Automated marketplace discovery is awaiting authorized pr
 ## 14. Current limitations
 
 - **Local and single-user only:** no authentication.
-- **No end-to-end flow for new photos:** uploads stop at staging.
+- **No end-to-end flow for new photos:** an upload can be analysed into a saved reference (one confirmed Luna request), but it gets no candidates until authorized discovery or a curated manifest exists.
 - **Curated candidates only:** offline runs from the UI use the curated candidate set; saved provider runs are viewable when they exist, but are run via `pnpm source:auto`.
 - **Same-process lock:** the offline-run lock is per server process, backed by the journal's `running` state.
 - **Long runs block the request:** a run that must recompute SigLIP keeps its request open while it does so.

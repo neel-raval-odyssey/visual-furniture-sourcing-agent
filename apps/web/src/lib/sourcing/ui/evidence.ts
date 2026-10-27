@@ -33,7 +33,7 @@ const inside = (root: string, p: string) => {
 };
 
 /** Reads a file confined to `root`, refusing symlinks and escapes, and checks size, format and hash. */
-async function readConfined(root: string, relPath: string, expectedSha: string): Promise<EvidenceResult> {
+export async function readConfined(root: string, relPath: string, expectedSha: string): Promise<EvidenceResult> {
   if (relPath.split(/[\\/]/).includes("..") || isAbsolute(relPath)) return fail(400, "invalid_path", "Evidence path is not allowed");
   const lexical = resolve(root, relPath);
   if (!inside(resolve(root), lexical)) return fail(400, "invalid_path", "Evidence path is not allowed");

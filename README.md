@@ -4,6 +4,7 @@ An AI-powered furniture sourcing application. Given a reference photo of a piece
 
 > Status: early development.
 > - **Real:** image understanding (GPT-6 Luna), usable from a local CLI.
+> - **Implemented, awaiting first authorized live run:** analysing a newly uploaded photo in the web app (one explicitly confirmed GPT-6 Luna request; the result becomes a saved reference). See [docs/new-photo-image-understanding.md](docs/new-photo-image-understanding.md).
 > - **Implemented, awaiting first authorized live run:** automated Alibaba.com discovery through a third-party provider (Apify Actor `scrapewise/alibaba-com-scraper`, not an official Alibaba.com API; `pnpm discover:marketplace`).
 > - **Real, operator-assisted:** Alibaba.com candidate intake. A person finds candidates with Alibaba Lens or Alibaba.com search and records them in a private manifest; the app imports them and searches nothing itself.
 > - **Real, local:** visual shortlisting. SigLIP 2 image embeddings rank recorded candidates by cosine similarity to the reference (a retrieval signal, not a verified match).
@@ -12,7 +13,7 @@ An AI-powered furniture sourcing application. Given a reference photo of a piece
 > - **Synthetic stubs:** mock discovery fixtures and mock visual verification. Real candidates without a Sol result are reported as "not assessed".
 > - **Provisional:** ranking.
 > - **Real, local:** a web interface for saved sourcing results — a plain-language simple view plus an advanced workspace with offline runs and private photo staging (`pnpm dev:local`).
-> - **Not available yet:** live end-to-end Alibaba sourcing, and analysis of newly uploaded photos.
+> - **Not available yet:** live end-to-end Alibaba sourcing, and product discovery for newly analysed photos.
 
 ## Requirements
 
@@ -33,7 +34,7 @@ pnpm dev        # http://localhost:3000
 
 | Variable | Needed for | Default |
 | --- | --- | --- |
-| `OPENAI_API_KEY` | `pnpm analyze:image --live` | — |
+| `OPENAI_API_KEY` | `pnpm analyze:image --live`; "Analyze this photo" in the local web app | — |
 | `OPENAI_IMAGE_UNDERSTANDING_MODEL` | Image analysis | `gpt-6-luna` |
 
 Put real values in your own private env file. Next.js loads env files from its app directory, not from the repository root, so variables for the web app go in `apps/web/.env.local`. All `.env` and `.env.*` files except `.env.example` are git-ignored. Never commit real credentials.
@@ -111,6 +112,7 @@ pnpm source:candidates --case ettrick-bed --run        # normalized candidates a
 A local Next.js interface over the saved sourcing records, in two layers over the same data:
 
 - **Simple view** (`/sourcing`, the default): "Find furniture that looks like this." Start → Results → Compare designs for the saved example, in plain language, with the original Alibaba listings. Uploading a photo only saves it for later analysis.
+- **Analyze a new photo:** upload a photo, then **Analyze this photo** on its page. After a confirmation that explains the charge, one GPT-6 Luna request turns it into a saved reference (it does not search for products). See [docs/new-photo-image-understanding.md](docs/new-photo-image-understanding.md).
 - **Advanced workspace** (`/sourcing/workspace`): every reference and fingerprint, run history and progress, SigLIP and Sol results, full evidence, provenance and offline runs from saved evidence.
 
 See [docs/visual-sourcing-web-experience.md](docs/visual-sourcing-web-experience.md).

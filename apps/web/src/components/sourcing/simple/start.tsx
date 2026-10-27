@@ -52,7 +52,7 @@ export function SimpleStart({ example }: { example: FeaturedExample | null }) {
             Try your own furniture photo
           </h2>
           <p className="text-ink-soft">
-            Uploading saves your photo privately on this computer for later analysis. It doesn&apos;t search for similar furniture yet — that isn&apos;t available in this preview.
+            Uploading saves your photo privately on this computer. You can then ask AI to analyze the furniture, after a confirmation. Searching for similar products isn&apos;t available for new photos yet.
           </p>
         </div>
         <UploadDropzone />

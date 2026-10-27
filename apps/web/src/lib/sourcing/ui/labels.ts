@@ -108,5 +108,14 @@ export function formatDate(iso: string | null): string {
 
 export const humanize = (s: string) => s.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 
-/** "ettrick-bed" → "Ettrick bed" (case ids are slugs). */
-export const caseTitle = (caseId: string) => humanize(caseId.replace(/-/g, " "));
+const UPLOAD_CASE = /^upl-(\d{4})-(\d{2})-(\d{2})t[0-9-]+z-([0-9a-f]{8})$/;
+
+/** "ettrick-bed" → "Ettrick bed" (case ids are slugs); references made from uploads read "Uploaded photo · 27 Oct 2026 (e47b6dfd)". */
+export function caseTitle(caseId: string): string {
+  const upload = UPLOAD_CASE.exec(caseId);
+  if (upload) {
+    const date = new Date(Date.UTC(Number(upload[1]), Number(upload[2]) - 1, Number(upload[3])));
+    return `Uploaded photo · ${date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })} (${upload[4]})`;
+  }
+  return humanize(caseId.replace(/-/g, " "));
+}

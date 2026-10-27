@@ -8,6 +8,19 @@ import { formatDate, caseTitle, humanize, READINESS_LABELS } from "@/lib/sourcin
 import { localPaths } from "@/lib/sourcing/ui/local-access";
 import { localPageAllowed } from "@/lib/sourcing/ui/page-gate";
 import { listUploads, uploadImageUrl } from "@/lib/sourcing/ui/uploads";
+import { effectiveState, listAttempts } from "@/lib/sourcing/ui/analysis/attempts";
+
+const UPLOAD_STATE_LABELS: Record<string, string> = {
+  none: "Awaiting image understanding",
+  not_sent: "Awaiting image understanding",
+  reserved: "Analysis in progress",
+  sending: "Analysis in progress",
+  analyzed: "Analyzed · saved as a reference",
+  registration_pending: "Analyzed · saving not finished",
+  not_identified: "Analyzed · no furniture identified",
+  failed: "Analysis failed",
+  uncertain: "Analysis outcome uncertain",
+};
 
 export const metadata: Metadata = { title: "Advanced workspace" };
 
@@ -15,6 +28,14 @@ export default async function SourcingWorkspace() {
   if (!(await localPageAllowed())) return null;
   const paths = localPaths();
   const [references, uploads] = await Promise.all([listReferences(paths), listUploads(paths)]);
+  const uploadStates = new Map(
+    await Promise.all(
+      uploads.slice(0, 8).map(async (u) => {
+        const latest = (await listAttempts(paths, u.id)).attempts.at(-1);
+        return [u.id, latest ? effectiveState(latest) : "none"] as const;
+      }),
+    ),
+  );
   const withResults = references.filter((r) => r.readiness === "results_available" && !r.synthetic);
 
   return (
@@ -48,7 +69,7 @@ export default async function SourcingWorkspace() {
       </section>
 
       <Notice tone="neutral" title="Automated marketplace discovery is awaiting authorized provider access">
-        Candidates come from operator-recorded Alibaba.com listings. The automated provider integration is implemented but not approved for live use, so this workspace never searches marketplaces or makes paid model requests.
+        Candidates come from operator-recorded Alibaba.com listings. The automated provider integration is implemented but not approved for live use, so this workspace never searches marketplaces. Its only paid request is a GPT-6 Luna analysis of an uploaded photo, sent once and only after explicit confirmation on that photo&apos;s page.
       </Notice>
 
       <section aria-labelledby="refs">
@@ -95,7 +116,7 @@ export default async function SourcingWorkspace() {
         <div>
           <SectionTitle id="upload" eyebrow="New reference" title="Upload a furniture photograph" />
           <p className="mb-4 text-ink-soft">
-            The photo is checked and saved privately on this computer. It is not sent anywhere, and it is not analysed automatically: image understanding and marketplace discovery are separate steps that need explicit approval.
+            The photo is checked and saved privately on this computer. Nothing is sent automatically: its page offers one explicitly confirmed GPT-6 Luna analysis, and marketplace discovery is a separate step that is not available for new photos yet.
           </p>
           <UploadDropzone />
         </div>
@@ -115,7 +136,7 @@ export default async function SourcingWorkspace() {
                       <p className="truncate text-sm font-medium text-ink">{u.originalName ?? u.id}</p>
                       <p className="text-xs text-muted">Uploaded {formatDate(u.uploadedAt)}</p>
                       <p className="mt-1 inline-flex items-center gap-1 text-xs text-warn">
-                        <Icon name="clock" className="h-3.5 w-3.5" /> Awaiting image understanding
+                        <Icon name="clock" className="h-3.5 w-3.5" /> {UPLOAD_STATE_LABELS[uploadStates.get(u.id) ?? "none"]}
                       </p>
                     </div>
                   </Link>

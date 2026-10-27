@@ -55,7 +55,8 @@ describe("simple start screen", () => {
     expect(html).toContain(`href="${resultsHref(ctx.caseId, ctx.runId!)}"`);
     expect(text(html)).toContain("Explore example results");
     expect(text(html)).toContain("This example uses saved Alibaba listings. Live marketplace search is not yet available.");
-    expect(text(html)).toMatch(/saves your photo privately on this computer for later analysis/);
+    expect(text(html)).toMatch(/saves your photo privately on this computer\. You can then ask AI to analyze/);
+    expect(text(html)).toMatch(/Searching for similar products isn't available for new photos yet/);
     expect(text(html)).not.toMatch(/find suppliers/i);
     expect(primary(html)).not.toMatch(TECHNICAL);
   });
