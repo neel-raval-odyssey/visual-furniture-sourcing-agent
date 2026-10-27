@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { DataProvenance, DataSourceKind, ImageRef } from "../domain";
+import type { AcquisitionMethod, DataProvenance, DataSourceKind, ImageRef } from "../domain";
 import type { Assert, SchemaMatches } from "./contract";
 
 /**
@@ -32,12 +32,16 @@ export const imageRefSchema = z.strictObject({
   heightPx: z.int().positive().optional(),
 });
 
+export const acquisitionMethodSchema = z.enum(["provider_api", "operator_assisted"]);
+
 export const dataProvenanceSchema = z.strictObject({
   marketplace: marketplaceIdSchema,
   dataSource: dataSourceKindSchema,
   retrievedAt: isoTimestampSchema,
+  acquisitionMethod: acquisitionMethodSchema.optional(),
 });
 
 export type _ImageRefCheck = Assert<SchemaMatches<typeof imageRefSchema, ImageRef>>;
 export type _DataSourceKindCheck = Assert<SchemaMatches<typeof dataSourceKindSchema, DataSourceKind>>;
+export type _AcquisitionMethodCheck = Assert<SchemaMatches<typeof acquisitionMethodSchema, AcquisitionMethod>>;
 export type _DataProvenanceCheck = Assert<SchemaMatches<typeof dataProvenanceSchema, DataProvenance>>;

@@ -15,6 +15,9 @@
     "demo:pipeline": "pnpm --filter web demo:pipeline",
     "analyze:image": "pnpm --filter web analyze:image",
     "eval:images": "pnpm --filter web eval:images",
+    "source:candidates": "pnpm --filter web source:candidates",
+    "shortlist:images": "pnpm --filter web shortlist:images",
+    "verify:visual": "pnpm --filter web verify:visual",
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   }
 }

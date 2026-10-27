@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { DiscoveryProviderInfo, DiscoverySearchResult } from "../discovery/types";
 import {
+  acquisitionMethodSchema,
   dataSourceKindSchema,
   isoTimestampSchema,
   marketplaceIdSchema,
@@ -14,6 +15,7 @@ export const discoveryProviderInfoSchema = z.strictObject({
   providerId: nonEmptyStringSchema,
   marketplace: marketplaceIdSchema,
   dataSource: dataSourceKindSchema,
+  acquisitionMethod: acquisitionMethodSchema.optional(),
 });
 
 /**

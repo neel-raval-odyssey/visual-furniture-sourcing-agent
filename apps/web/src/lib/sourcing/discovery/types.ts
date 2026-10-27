@@ -1,4 +1,5 @@
 import type {
+  AcquisitionMethod,
   CandidateListing,
   DataSourceKind,
   FurnitureFingerprint,
@@ -30,6 +31,12 @@ export interface DiscoveryProviderInfo {
   marketplace: MarketplaceId;
   /** "mock" for synthetic fixtures, "live" for a real provider. */
   dataSource: DataSourceKind;
+  /**
+   * "operator_assisted" means the provider only imports candidates a person
+   * found with the marketplace's own tools; no search was run by this
+   * application. Absent when not recorded.
+   */
+  acquisitionMethod?: AcquisitionMethod;
 }
 
 /**

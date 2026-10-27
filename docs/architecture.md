@@ -39,8 +39,8 @@ reference photo
 
 Two stages, to keep cost bounded:
 
-1. **Embedding similarity** — **SigLIP 2 So400m Patch14-384** embeddings for the reference image and candidate images, computed by a Python service (PyTorch + Hugging Face Transformers). Cosine similarity ranks candidates and produces a shortlist.
-2. **Detailed comparison** — **GPT-6.1 Sol** (proposed) compares the reference with each shortlisted candidate attribute by attribute and returns a structured verdict (match level, matching and differing features, confidence).
+1. **Embedding similarity** — SigLIP 2 image embeddings for the reference image and candidate images, computed locally by `services/vision` (PyTorch + Hugging Face Transformers). Cosine similarity ranks candidates and produces a shortlist. Implemented with **SigLIP 2 Base Patch16-384** by default; So400m Patch14-384 is selectable. See [visual-shortlisting.md](visual-shortlisting.md).
+2. **Detailed comparison** — **GPT-6.1 Sol** compares the reference with each candidate photo, one pair per request, and returns structured evidence mapped to `VisualMatchAssessment` (classification, design similarity index, confidence, matching and differing features). Implemented; awaiting its first live run. See [visual-verification.md](visual-verification.md).
 
 ### 4. Seller intelligence
 
@@ -63,6 +63,17 @@ Shared TypeScript contracts live in `apps/web/src/lib/sourcing/`:
   - `VisualMatchAssessment`: `designSimilarityIndex` (0–100, not a calibrated probability) is separate from `confidence` (`low | medium | high`). Classifications describe visual design only, not manufacturer or SKU identity.
   - `RankedSourcingResult`: assessment, supplier and rank are optional, so discovery output can be represented before matching runs.
 - `discovery/`: the `AlibabaDiscoveryAdapter` interface (`discoverCandidates(request) → result`). Discovery returns candidates, suppliers and provenance only. It never scores similarity or ranks results.
+- `discovery/curated/`: `CuratedAlibabaDiscoveryAdapter` imports operator-recorded Alibaba.com candidates from a validated private manifest. See [alibaba-candidate-intake.md](alibaba-candidate-intake.md).
+  - It performs no search and no network request.
+  - Provider `curated-alibaba`, `acquisitionMethod: "operator_assisted"`, `queriesUsed: []`.
+  - Genuine records must use real Alibaba.com hosts; synthetic ones must use reserved example domains.
+- `understanding/saved/`: `SavedFingerprintImageUnderstandingService` replays a fingerprint from a saved `analyze:image` run record, so a reference can be reused without another model call.
+- `verification/UnassessedVisualVerificationService`: returns no assessments, so real candidates stay "not assessed" until detailed visual verification exists.
+- `verification/openai/`: `OpenAIVisualVerificationService` (GPT-6.1 Sol), implementing `VisualVerificationService`. Pairwise requests with only the two images and the fingerprint's visual observations; strict raw schema, consistency checks and adapter-owned provenance; a `PaidRequestBudget`; private run records and an offline report. `pipeline/verified.ts` composes it with the curated path. See [visual-verification.md](visual-verification.md).
+- `shortlisting/`: retrieval-stage visual shortlist (`pnpm shortlist:images`). See [visual-shortlisting.md](visual-shortlisting.md).
+  - `evidence.ts` resolves the reference photograph (hash-checked against the saved run) and each listing's local images (confined to `<candidates>/<case>/`).
+  - `embedding-client.ts` runs `python -m vfsa_vision embed` as a child process with a JSON protocol (`protocol.ts`, strictly validated and cross-checked against the request).
+  - `shortlist.ts` builds a `VisualShortlist`: listings ranked by `embeddingCosineSimilarity`, with listing and supplier identity, image provenance, exclusions with reasons, and `visualVerificationStatus: "not_assessed"`. It never produces `VisualMatchAssessment` fields and is not part of `SourcingPipeline`.
 - `discovery/mock/`: `MockAlibabaDiscoveryAdapter` and synthetic fixtures (example.com URLs, `[MOCK]` titles, `dataSource: "mock"`). It applies simple category and text filters, keeps fixture order and makes no network requests.
 - `understanding/`: `ImageUnderstandingService.analyze(reference) → FurnitureFingerprint`. The mock looks up hand-written fingerprints by reference id. It doesn't read pixels, and it throws `UnsupportedReferenceError` instead of inventing a fingerprint. `understanding/openai/` holds the real implementation (below).
 - `evaluation/`: offline evaluation of image understanding. It has no API calls and doesn't load the OpenAI SDK.
@@ -145,10 +156,12 @@ ReferenceImage → ReferenceImageContentProvider.load → ImageContent (bytes, M
 
 **Implemented vs. planned:**
 - Image understanding has a real provider implementation, run locally through the CLI. The pipeline still wires the mock by default.
-- Discovery and visual verification are synthetic stubs, and ranking is provisional.
+- Discovery has a real, operator-assisted intake path (`pnpm source:candidates`). The mock adapter remains for synthetic runs, and there is no automatic Alibaba.com search.
+- Visual shortlisting is real: local SigLIP 2 embeddings rank recorded candidates by cosine similarity, as a separate retrieval-stage result.
+- Detailed visual verification has a real GPT-6.1 Sol implementation (`pnpm verify:visual`), not yet run live. Without a Sol result, real candidates stay "not assessed"; the synthetic stub remains for demos. Ranking is provisional.
 - There is no live end-to-end Alibaba sourcing workflow yet.
 - Each real integration will also need an adapter that maps raw model or provider output into the domain types, setting provenance itself, before the pipeline's validation runs.
-- Planned: an authorized Alibaba integration (discovery), SigLIP 2 and GPT-6.1 Sol (verification), and a production ranking policy.
+- Planned: an authorized Alibaba integration (discovery) and a production ranking policy.
 - There is no live Alibaba integration. It is waiting on confirmation of an authorized integration.
 
 ## Components
@@ -156,12 +169,13 @@ ReferenceImage → ReferenceImageContentProvider.load → ImageContent (bytes, M
 | Component          | Technology                                     | Status   |
 | ------------------ | ---------------------------------------------- | -------- |
 | Web app            | Next.js (App Router), TypeScript, Tailwind CSS | Shell    |
-| Embedding service  | Python, PyTorch, Hugging Face Transformers     | Planned  |
+| Image embeddings   | Python (`services/vision`), PyTorch, Hugging Face Transformers, SigLIP 2; local CLI component | Implemented (shortlisting); no server |
 | Database           | PostgreSQL (searches, candidates, results)     | Planned  |
 | Object storage     | S3-compatible (reference and candidate images) | Planned  |
-| Alibaba adapter    | Interface + mock implemented; live integration TBD | Live blocked on confirmation |
-| Sourcing pipeline  | TypeScript orchestrator + synthetic stage stubs | Implemented (stubs only) |
-| Image understanding | OpenAI Responses API (GPT-6 Luna), local CLI | Implemented; first live run pending |
+| Alibaba adapter    | Interface, mock, and operator-assisted curated intake | Automatic search blocked on an authorized integration |
+| Sourcing pipeline  | TypeScript orchestrator; synthetic and curated (saved fingerprint + operator candidates) compositions | Implemented; verified composition available (Sol), not run live yet |
+| Image understanding | OpenAI Responses API (GPT-6 Luna), local CLI | Implemented |
+| Visual verification | OpenAI Responses API (GPT-6.1 Sol), local CLI | Implemented; first live run pending |
 
 ## Open decisions
 

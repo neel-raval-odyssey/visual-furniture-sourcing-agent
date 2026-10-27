@@ -1,0 +1,9 @@
+[project]
+name = "vfsa-vision"
+version = "0.1.0"
+description = "Local SigLIP 2 image embeddings and cosine-similarity shortlisting"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-p no:cacheprovider"

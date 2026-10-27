@@ -20,10 +20,13 @@ evals/local/
 CLAUDE.local.md
 .claude/settings.local.json
 
-# Python (future services)
+# Python services
 __pycache__/
 *.py[cod]
 .venv/
+.pytest_cache/
+# Downloaded model weights (services/vision)
+services/vision/.cache/
 
 # misc
 .DS_Store

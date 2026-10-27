@@ -1,0 +1,9 @@
+# Runtime dependencies for services/vision (Python 3.13, tested on macOS Apple silicon).
+# Install into the project-local virtual environment; see README.md.
+torch==2.14.1
+transformers==5.20.2
+huggingface_hub==2.3.0
+safetensors==0.8.0
+tokenizers==0.23.3
+pillow==13.0.0
+numpy==2.5.4

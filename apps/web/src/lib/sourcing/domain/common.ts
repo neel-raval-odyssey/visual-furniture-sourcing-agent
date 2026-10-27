@@ -29,9 +29,21 @@ export type MarketplaceId = "alibaba" | (string & {});
 /** Whether data came from synthetic fixtures or a real provider. */
 export type DataSourceKind = "mock" | "live";
 
+/**
+ * How marketplace records were obtained:
+ * - provider_api: returned by an authorized marketplace integration.
+ * - operator_assisted: found by a person using the marketplace's own
+ *   user-facing tools and recorded by hand; this application performed no
+ *   search. Manual capture is not independent verification of the content.
+ */
+export type AcquisitionMethod = "provider_api" | "operator_assisted";
+
 /** Where a piece of marketplace data came from and when it was retrieved. */
 export interface DataProvenance {
   marketplace: MarketplaceId;
   dataSource: DataSourceKind;
+  /** For operator-assisted records, when the operator captured them. */
   retrievedAt: IsoTimestamp;
+  /** Absent when not recorded (e.g. existing synthetic fixtures). */
+  acquisitionMethod?: AcquisitionMethod;
 }

@@ -12,7 +12,10 @@
     "test:watch": "vitest",
     "demo:pipeline": "vitest run --config vitest.demo.config.mts",
     "analyze:image": "tsx scripts/analyze-image.ts",
-    "eval:images": "tsx scripts/eval-images.ts"
+    "eval:images": "tsx scripts/eval-images.ts",
+    "source:candidates": "tsx scripts/source-candidates.ts",
+    "shortlist:images": "tsx scripts/shortlist-images.ts",
+    "verify:visual": "tsx scripts/verify-visual.ts"
   },
   "dependencies": {
     "next": "16.4.3",

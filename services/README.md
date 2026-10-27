@@ -1,9 +1,5 @@
 # services/
 
-Reserved for backend services that do not belong in the Next.js app.
+Backend components that do not belong in the Next.js app. Python services are not part of the pnpm workspace.
 
-Planned:
-
-- `embedding/` — Python service (PyTorch + Hugging Face Transformers) that produces SigLIP 2 image embeddings for reference photos and candidate listing images.
-
-Nothing is implemented here yet. Python services are not part of the pnpm workspace.
+- [`vision/`](vision/README.md): local SigLIP 2 image embeddings and cosine similarity for the visual shortlist (PyTorch + Hugging Face Transformers). A command-line component called by `pnpm shortlist:images`; not a server.

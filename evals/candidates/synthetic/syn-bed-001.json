@@ -1,0 +1,75 @@
+{
+  "manifestType": "alibaba_candidate_manifest",
+  "schemaVersion": 1,
+  "dataSource": "mock",
+  "caseId": "syn-bed-001",
+  "referenceImageId": "ref-local-0ef9571d83494cd6",
+  "fingerprintId": "fp-synthetic-syn-bed-001",
+  "capture": {
+    "status": "completed",
+    "method": "operator_assisted",
+    "capturedAt": "2026-10-26T09:00:00.000Z",
+    "tools": ["alibaba_lens", "alibaba_keyword_search"],
+    "queriesTyped": ["arched panel bed"],
+    "notes": "SYNTHETIC sample. Every listing, supplier and URL here is invented and uses reserved example domains."
+  },
+  "suppliers": [
+    {
+      "ref": "supplier-a",
+      "name": "[SYNTHETIC] Example Furniture Works",
+      "profileUrl": "https://supplier-a.example.com/",
+      "countryCode": "CN",
+      "location": "Example City",
+      "classification": "manufacturer",
+      "verifications": [{ "type": "marketplace_verified_supplier", "status": "verified", "reportedBy": "example marketplace page" }],
+      "platformTenureYears": 6,
+      "tradeAssurance": { "available": true },
+      "responsiveness": null
+    },
+    {
+      "ref": "supplier-b",
+      "name": "[SYNTHETIC] Example Trading Co",
+      "profileUrl": null,
+      "countryCode": null,
+      "location": null,
+      "classification": null,
+      "verifications": null,
+      "platformTenureYears": null,
+      "tradeAssurance": null,
+      "responsiveness": null
+    }
+  ],
+  "candidates": [
+    {
+      "listingUrl": "https://marketplace.example.com/product-detail/Synthetic-Arched-Panel-Bed_1000000000001.html",
+      "marketplaceProductId": null,
+      "title": "[SYNTHETIC] Arched panel bed, dark wood finish",
+      "category": "Beds",
+      "images": [{ "url": "https://images.example.com/synthetic/bed-1-primary.jpg", "role": "primary" }],
+      "attributes": { "Material": "Wood (seller-reported)", "Style": "Traditional" },
+      "price": { "min": 180, "max": 240, "currency": "USD", "unit": "piece" },
+      "minimumOrder": { "quantity": 10, "unit": "pieces" },
+      "supplierRef": "supplier-a",
+      "foundWith": "alibaba_lens",
+      "notes": null
+    },
+    {
+      "listingUrl": "https://marketplace.example.com/product-detail/Synthetic-Arched-Panel-Bed_1000000000002.html",
+      "marketplaceProductId": "1000000000002",
+      "title": "[SYNTHETIC] Arched panel bed, dark wood finish",
+      "category": null,
+      "images": [{ "url": "https://images.example.com/synthetic/bed-2-primary.jpg" }],
+      "attributes": null,
+      "price": null,
+      "minimumOrder": null,
+      "supplierRef": "supplier-b",
+      "foundWith": "alibaba_keyword_search",
+      "notes": "Same title as the first candidate but a different product."
+    },
+    {
+      "listingUrl": "https://marketplace.example.com/product-detail/Synthetic-Headboard-Bed_1000000000003.html",
+      "title": "[SYNTHETIC] Headboard bed with no recorded images",
+      "images": []
+    }
+  ]
+}
