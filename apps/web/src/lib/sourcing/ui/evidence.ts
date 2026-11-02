@@ -5,6 +5,8 @@ import { detectImageMimeType } from "../image-input/image-content";
 import { EvidenceError, resolveReferenceImage } from "../shortlisting/evidence";
 import { loadSavedFingerprint, SavedRunError } from "../understanding/saved/saved-fingerprint";
 import { CASE_ID, getRun, LISTING_ID, RUN_ID, runManifestDir, type Paths } from "./data";
+import { ENTRY_ID, INTAKE_ID, readEntryImage } from "./intake/intake";
+import { readCollectionImage } from "./intake/revision";
 import { getUpload, UPLOAD_ID } from "./uploads";
 
 /**
@@ -13,6 +15,8 @@ import { getUpload, UPLOAD_ID } from "./uploads";
  *   reference/<case>                 → the case's reference photo (mapping + saved hash)
  *   candidate/<case>/<run>/<listing> → the image the run recorded for that listing
  *   upload/<upload id>               → a staged upload
+ *   intake/<case>/<intake>/<product> → a product photo recorded in a draft candidate intake
+ *   collection/<case>/<n>            → the photo of the n-th product in the published collection
  * The file path always comes from trusted records, must stay inside its
  * approved folder (no symlinks, no escapes), must be a PNG/JPEG/WebP within the
  * size limit, and must still have the SHA-256 recorded for it. Errors never
@@ -32,8 +36,8 @@ const inside = (root: string, p: string) => {
   return rel !== "" && !rel.startsWith(`..${sep}`) && rel !== ".." && !isAbsolute(rel);
 };
 
-/** Reads a file confined to `root`, refusing symlinks and escapes, and checks size, format and hash. */
-export async function readConfined(root: string, relPath: string, expectedSha: string): Promise<EvidenceResult> {
+/** Reads a file confined to `root`, refusing symlinks and escapes, and checks size, format and (when recorded) hash. */
+export async function readConfined(root: string, relPath: string, expectedSha: string | null): Promise<EvidenceResult> {
   if (relPath.split(/[\\/]/).includes("..") || isAbsolute(relPath)) return fail(400, "invalid_path", "Evidence path is not allowed");
   const lexical = resolve(root, relPath);
   if (!inside(resolve(root), lexical)) return fail(400, "invalid_path", "Evidence path is not allowed");
@@ -53,7 +57,7 @@ export async function readConfined(root: string, relPath: string, expectedSha: s
   if (!inside(realRoot, await realpath(lexical))) return fail(400, "invalid_path", "Evidence resolves outside its folder");
   if (info.size > MAX_EVIDENCE_BYTES) return fail(413, "too_large", "The image is too large to display");
   const bytes = new Uint8Array(await readFile(lexical));
-  if (sha256(bytes) !== expectedSha) return fail(409, "changed", "The image changed after it was recorded");
+  if (expectedSha !== null && sha256(bytes) !== expectedSha) return fail(409, "changed", "The image changed after it was recorded");
   const mimeType = detectImageMimeType(bytes);
   if (!mimeType) return fail(415, "unsupported_format", "Only PNG, JPEG and WebP evidence is served");
   return { ok: true, bytes, mimeType };
@@ -97,6 +101,12 @@ export async function resolveEvidence(paths: Paths, parts: string[]): Promise<Ev
     }
     if (!image.ref.startsWith(`${caseId}/`)) return fail(400, "invalid_path", "Evidence path is not allowed");
     return readConfined(join(manifestDir, caseId), image.ref.slice(caseId.length + 1), image.sha256);
+  }
+  if (kind === "collection" && rest.length === 2 && CASE_ID.test(rest[0]) && /^\d{1,2}$/.test(rest[1])) {
+    return (await readCollectionImage(paths, rest[0], Number(rest[1]))) ?? fail(404, "no_image", "No photo was recorded for this product");
+  }
+  if (kind === "intake" && rest.length === 3 && CASE_ID.test(rest[0]) && INTAKE_ID.test(rest[1]) && ENTRY_ID.test(rest[2])) {
+    return (await readEntryImage(paths, rest[0], rest[1], rest[2])) ?? fail(404, "no_image", "No photo was recorded for this product");
   }
   if (kind === "upload" && rest.length === 1 && UPLOAD_ID.test(rest[0])) {
     const upload = await getUpload(paths, rest[0]);

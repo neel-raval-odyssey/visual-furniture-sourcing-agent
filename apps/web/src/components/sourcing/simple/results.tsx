@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { SourcingEntry, SourcingResult } from "@/lib/sourcing/orchestration/assemble";
 import { candidateImageUrl, referenceImageUrl } from "@/lib/sourcing/ui/data";
 import { caseTitle, classificationLabel, CONFIDENCE_EXPLANATION, COSINE_EXPLANATION, INDEX_EXPLANATION } from "@/lib/sourcing/ui/labels";
-import { balancedColumns, compareHref, keyDifference, listedTerms, plainVerdict, shortTitle, similarities, splitResults } from "@/lib/sourcing/ui/simple";
+import { balancedColumns, byQuickComparison, compareHref, keyDifference, listedTerms, plainVerdict, shortTitle, similarities, splitResults } from "@/lib/sourcing/ui/simple";
 import { EvidenceImage } from "../evidence-image";
 import { Badge, ExternalLink, Icon, Notice } from "../primitives";
 import { DifferenceNote, Disclosure, PrimaryLink, ProductCard, SavedExampleNote } from "./parts";
@@ -17,6 +17,12 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
   const split = result ? splitResults(result) : null;
   const top = split?.top ?? null;
   const name = caseTitle(caseId);
+  // Products found but not yet compared in detail: shown in the quick visual (retrieval) order, never as matches.
+  const pending = Boolean(split && !top && split.notCompared.length);
+  // Products that were never compared at all (no usable photo, no local comparison) are leads, not results.
+  const comparedLocally = split ? split.notCompared.filter((e) => e.retrieval.siglipRank !== null).length : 0;
+  const leadsOnly = pending && comparedLocally === 0;
+  const fromUpload = caseId.startsWith("upl-");
 
   return (
     <div className="space-y-14">
@@ -26,10 +32,15 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
 
       <header className="grid items-center gap-8 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className="space-y-4">
-          <p className="text-sm font-medium text-accent">Saved example · {name}</p>
-          <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl">Similar furniture we found</h1>
-          <p className="text-lg text-ink-soft">Here are the closest designs from the products reviewed.</p>
-          <SavedExampleNote synthetic={result?.synthetic} />
+          <p className="text-sm font-medium text-accent">{fromUpload ? "Your photo" : `Saved example · ${name}`}</p>
+          <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl">{leadsOnly ? "Saved product leads" : pending ? "Products to compare" : "Similar furniture we found"}</h1>
+          <p className="text-lg text-ink-soft">{leadsOnly ? "None of these products has been compared with your photo yet." : pending ? "Potentially similar products — detailed comparison pending." : "Here are the closest designs from the products reviewed."}</p>
+          <SavedExampleNote synthetic={result?.synthetic} source={fromUpload ? "recorded" : "example"} />
+          {leadsOnly && fromUpload ? (
+            <PrimaryLink href={`/sourcing/find/${caseId}`}>
+              Add product photos <Icon name="forward" className="h-5 w-5" />
+            </PrimaryLink>
+          ) : null}
         </div>
         <EvidenceImage src={referenceImageUrl(caseId)} alt={`Original furniture photo: ${name}`} label="Original" priority />
       </header>
@@ -45,12 +56,6 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
       ) : null}
 
       {top ? <FeaturedResult entry={top} imageUrl={imageOf(top)} href={compareHref(caseId, runId, top.listingId)} /> : null}
-
-      {split && !top && split.notCompared.length ? (
-        <Notice tone="neutral" title="None of the saved products has been compared yet">
-          They are listed below, unranked.
-        </Notice>
-      ) : null}
 
       {split?.others.length ? (
         <section aria-labelledby="more" className="space-y-5">
@@ -71,12 +76,18 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
         <section aria-labelledby="not-compared" className="space-y-5">
           <div>
             <h2 id="not-compared" className="font-serif text-2xl text-ink sm:text-3xl">
-              Not yet compared
+              {leadsOnly ? "Photo needed" : pending ? "Potentially similar products — detailed comparison pending" : "Not yet compared"}
             </h2>
-            <p className="mt-1 text-ink-soft">These products were found but haven&apos;t been compared with the original, so they aren&apos;t ranked.</p>
+            <p className="mt-1 text-ink-soft">
+              {leadsOnly
+                ? "These products have no usable photo, so they couldn't be compared. Add product photos on the product list page, then compare again."
+                : pending
+                ? "Put in order by a quick visual comparison on this computer. That order isn't a verified design match. A detailed comparison is a separate, paid step that needs its own approval."
+                : "These products were found but haven't been compared with the original, so they aren't ranked."}
+            </p>
           </div>
           <ul className={`grid gap-5 ${balancedColumns(split.notCompared.length)}`}>
-            {split.notCompared.map((e) => (
+            {(pending ? byQuickComparison(split.notCompared) : split.notCompared).map((e) => (
               <li key={e.listingId}>
                 <ProductCard entry={e} imageUrl={imageOf(e)} href={compareHref(caseId, runId, e.listingId)} />
               </li>

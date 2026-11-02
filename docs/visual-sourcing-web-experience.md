@@ -41,6 +41,7 @@ All P1-006 deep links under `/sourcing/references/…` are unchanged.
 | `references/[caseId]/page.tsx` | The saved Luna fingerprint (structure, appearance and distinctive features, each labelled with its certainty), runs, next action |
 | `references/[caseId]/runs/[runId]/page.tsx` | Results: overview counts; the closest verified design next to the reference; verified candidates in Sol order (with an optional SigLIP retrieval order via `?sort=retrieval`); unverified candidates listed separately; the recorded stage timeline; warnings, follow-ups and model provenance |
 | `…/candidates/[listingId]/page.tsx` | Comparison: reference and candidate photos (full-size view, no overlays), grouped Sol evidence, product and supplier facts |
+| `find/[caseId]/page.tsx` | Find similar products for an analysed photo: record products, add missing photos as a new version, compare only once a product has a photo |
 | `uploads/[uploadId]/page.tsx` | A staged upload and its analysis: ready, confirming, analyzing, analyzed (plain-English furniture summary), not identified, failed or uncertain |
 | `layout.tsx` | The shell and the local-access explanation |
 
@@ -50,6 +51,7 @@ All P1-006 deep links under `/sourcing/references/…` are unchanged.
 |---|---|
 | `GET evidence/[...parts]` | Private images by evidence id |
 | `POST uploads` | Stage a photo |
+| `POST intake/[caseId]` | Operator-assisted product intake: start, revise, save, photo, remove, complete, discard ([new-reference-candidate-acquisition.md](new-reference-candidate-acquisition.md)) |
 | `GET`/`POST uploads/[uploadId]/analysis` | Analysis status (read-only); one confirmed GPT-6 Luna analysis, or finishing an already-paid save |
 | `POST runs` | Offline run from saved evidence |
 | `GET runs/[caseId]/[runId]` | Stage states, for bounded polling |
@@ -116,6 +118,8 @@ pnpm dev:local          # VFSA_LOCAL_SOURCING_UI=1 next dev -H 127.0.0.1
 | `reference/<case>` | The reference photo found through `images.json`; served only if its SHA-256 equals the saved Luna run's hash |
 | `candidate/<case>/<run>/<listing>` | The image recorded for that listing in that run's `result.json`, resolved from the run journal's own source (curated manifest or discovery run folder) |
 | `upload/<upload id>` | A staged upload |
+| `intake/<case>/<intake>/<product>` | A product photo in a draft product list (hash-checked) |
+| `collection/<case>/<n>` | The photo of the n-th product in the current saved list (confined to the candidates folder) |
 
 **Each file must:**
 - be inside its approved folder (`evals/local/candidates`, `evals/local/discovery` or `evals/discovery`, under `<case>/`), with symlinks and escapes refused;

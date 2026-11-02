@@ -184,14 +184,15 @@ function AnalyzedSummary({ fingerprint, caseId }: { fingerprint: FurnitureFinger
       </div>
       <div className="rounded-2xl border border-accent/25 bg-accent-soft p-5">
         <p className="flex items-center gap-2 font-medium text-ink">
-          <Icon name="clock" className="h-4 w-4 text-accent" /> Ready for product discovery
+          <Icon name="forward" className="h-4 w-4 text-accent" /> Next: Find similar products
         </p>
         <p className="mt-1 text-sm text-ink-soft">
-          This photo is now a saved furniture reference. Finding genuine marketplace products for it is the next step, and isn&apos;t available automatically for new photos yet. No products have been searched for or matched.
+          This photo is now a saved furniture reference. Automatic marketplace search isn&apos;t available yet, so you can add products you find on Alibaba.com yourself. No products have been searched for or matched.
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <PrimaryLink href="#furniture-details">View furniture details</PrimaryLink>
+        <PrimaryLink href={`/sourcing/find/${caseId}`}>Find similar products</PrimaryLink>
+        <SecondaryLink href="#furniture-details">View furniture details</SecondaryLink>
         <SecondaryLink href={`/sourcing/references/${caseId}`}>Advanced details</SecondaryLink>
       </div>
     </>

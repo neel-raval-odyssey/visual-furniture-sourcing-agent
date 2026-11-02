@@ -9,7 +9,7 @@ import { Icon } from "./primitives";
  * pending state lasts exactly as long as the request (the orchestrator runs
  * inside it); there is no simulated progress.
  */
-export function RunOfflineButton({ caseId }: { caseId: string }) {
+export function RunOfflineButton({ caseId, simple = false, label = "Compare with your photo" }: { caseId: string; simple?: boolean; label?: string }) {
   const router = useRouter();
   const [state, setState] = useState<{ kind: "idle" } | { kind: "running" } | { kind: "error"; message: string }>({ kind: "idle" });
 
@@ -26,7 +26,7 @@ export function RunOfflineButton({ caseId }: { caseId: string }) {
         setState({ kind: "error", message: body.message ?? `The run could not be started (${res.status}).` });
         return;
       }
-      router.push(`/sourcing/references/${caseId}/runs/${body.runId}`);
+      router.push(simple ? `/sourcing/results/${caseId}/${body.runId}` : `/sourcing/references/${caseId}/runs/${body.runId}`);
     } catch {
       setState({ kind: "error", message: "The local server could not be reached." });
     }
@@ -41,9 +41,13 @@ export function RunOfflineButton({ caseId }: { caseId: string }) {
         className="inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:bg-ink-soft disabled:cursor-wait disabled:opacity-70"
       >
         <Icon name="play" className="h-4 w-4" />
-        {state.kind === "running" ? "Running with saved evidence…" : "Run using saved evidence"}
+        {simple ? (state.kind === "running" ? "Comparing photos on this computer…" : label) : state.kind === "running" ? "Running with saved evidence…" : "Run using saved evidence"}
       </button>
-      <p className="text-xs text-muted">Offline: reuses saved candidates, images, SigLIP shortlist and Sol assessments. No marketplace search and no paid model request.</p>
+      <p className="text-xs text-muted">
+        {simple
+          ? "Runs on this computer using the saved photos. No marketplace search and no paid AI request."
+          : "Offline: reuses saved candidates, images, SigLIP shortlist and Sol assessments. No marketplace search and no paid model request."}
+      </p>
       <p aria-live="polite" className="text-sm">
         {state.kind === "running" ? <span className="text-ink-soft">The run is in progress on this computer; this page will open its result when it finishes.</span> : null}
         {state.kind === "error" ? <span className="text-bad">{state.message}</span> : null}

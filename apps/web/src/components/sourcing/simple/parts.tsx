@@ -105,14 +105,16 @@ export function ProductCard({ entry, imageUrl, href }: { entry: SourcingEntry; i
 }
 
 /** The honest status line shown wherever saved example data appears. */
-export function SavedExampleNote({ synthetic = false }: { synthetic?: boolean }) {
+export function SavedExampleNote({ synthetic = false, source = "example" }: { synthetic?: boolean; source?: "example" | "recorded" }) {
   return (
     <p className="flex items-start gap-2 text-sm text-muted">
       <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />
       <span>
         {synthetic
           ? "This example uses made-up test listings, not real Alibaba products."
-          : "This example uses saved Alibaba listings. Live marketplace search is not yet available."}
+          : source === "recorded"
+            ? "These products were recorded by hand from Alibaba.com listings. Live marketplace search is not yet available."
+            : "This example uses saved Alibaba listings. Live marketplace search is not yet available."}
       </span>
     </p>
   );

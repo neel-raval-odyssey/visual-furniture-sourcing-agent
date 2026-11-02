@@ -93,7 +93,10 @@ export function plainVerdict(e: SourcingEntry): Verdict {
   if (known && (v.designSimilarityIndex !== null || v.classification === "insufficient_evidence")) {
     return { ...known, compared: v.designSimilarityIndex !== null };
   }
-  return { label: "Not yet compared", tone: "neutral", sentence: notComparedReason(e), compared: false };
+  // Not assessed in detail. Say what is actually true: no photo, compared only locally, or ready to compare.
+  if (e.imageEvidence.status !== "available") return { label: "Photo needed", tone: "warn", sentence: notComparedReason(e), compared: false };
+  if (e.retrieval.siglipRank !== null) return { label: "Compared locally", tone: "info", sentence: "Detailed verification pending.", compared: false };
+  return { label: "Ready to compare", tone: "neutral", sentence: notComparedReason(e), compared: false };
 }
 
 const IMPORTANCE: Record<string, number> = { defining: 0, supporting: 1, minor: 2 };
@@ -190,4 +193,9 @@ export interface SimpleResults {
 export function splitResults(result: SourcingResult): SimpleResults {
   const [top, ...others] = result.verified;
   return { top: top ?? null, others, notCompared: [...result.abstained, ...result.unverified] };
+}
+
+/** Not-yet-compared products in the quick visual (retrieval) order; products without a usable photo last. Not a match ranking. */
+export function byQuickComparison(entries: readonly SourcingEntry[]): SourcingEntry[] {
+  return [...entries].sort((a, b) => (a.retrieval.siglipRank ?? Infinity) - (b.retrieval.siglipRank ?? Infinity) || (a.listingId < b.listingId ? -1 : 1));
 }

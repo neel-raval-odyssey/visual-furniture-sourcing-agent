@@ -97,7 +97,8 @@ export function formatPrice(price: { min: number; max: number | null; currency: 
 }
 
 export function formatMoq(moq: { quantity: number; unit: string | null } | null): string {
-  return moq ? `${moq.quantity.toLocaleString("en-GB")}${moq.unit ? ` ${moq.unit}${moq.quantity === 1 ? "" : "s"}` : ""}` : "Not provided";
+  // Units are recorded as shown ("piece", sometimes already "pieces"); pluralize only singular ones.
+  return moq ? `${moq.quantity.toLocaleString("en-GB")}${moq.unit ? ` ${moq.unit}${moq.quantity === 1 || /s$/i.test(moq.unit) ? "" : "s"}` : ""}` : "Not provided";
 }
 
 export function formatDate(iso: string | null): string {

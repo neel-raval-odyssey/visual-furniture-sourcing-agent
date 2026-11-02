@@ -102,7 +102,7 @@ const attemptFile = (n: number) => `attempt-${n}.json`;
 export const recordFileName = (n: number) => `attempt-${n}.record.json`;
 
 /** Writes `text` to `path` only if nothing exists there, atomically (readers never see a partial file). */
-export async function writeExclusive(path: string, text: string): Promise<boolean> {
+export async function writeExclusive(path: string, text: string | Uint8Array): Promise<boolean> {
   const tmp = `${path}.${randomUUID()}.tmp`;
   await writeFile(tmp, text, { flag: "wx" });
   try {

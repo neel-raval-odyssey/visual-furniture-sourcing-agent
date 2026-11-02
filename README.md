@@ -13,7 +13,9 @@ An AI-powered furniture sourcing application. Given a reference photo of a piece
 > - **Synthetic stubs:** mock discovery fixtures and mock visual verification. Real candidates without a Sol result are reported as "not assessed".
 > - **Provisional:** ranking.
 > - **Real, local:** a web interface for saved sourcing results — a plain-language simple view plus an advanced workspace with offline runs and private photo staging (`pnpm dev:local`).
-> - **Not available yet:** live end-to-end Alibaba sourcing, and product discovery for newly analysed photos.
+> - **Real, local:** operator-assisted product intake for a newly analysed photo in the web app (`/sourcing/find/<case>`), producing a standard candidate manifest for the existing shortlisting and sourcing steps. See [docs/new-reference-candidate-acquisition.md](docs/new-reference-candidate-acquisition.md).
+> - **Blocked:** automated marketplace discovery. No authorized source exists; the implemented scraper fails the policy check (see [docs/marketplace-source-authorization.md](docs/marketplace-source-authorization.md)).
+> - **Not available yet:** live end-to-end Alibaba sourcing.
 
 ## Requirements
 
@@ -113,6 +115,7 @@ A local Next.js interface over the saved sourcing records, in two layers over th
 
 - **Simple view** (`/sourcing`, the default): "Find furniture that looks like this." Start → Results → Compare designs for the saved example, in plain language, with the original Alibaba listings. Uploading a photo only saves it for later analysis.
 - **Analyze a new photo:** upload a photo, then **Analyze this photo** on its page. After a confirmation that explains the charge, one GPT-6 Luna request turns it into a saved reference (it does not search for products). See [docs/new-photo-image-understanding.md](docs/new-photo-image-understanding.md).
+- **Find products for a new photo:** after analysis, **Find similar products** → **Add product leads**: search Alibaba.com yourself, record each product with its supplier and a saved photo, finish, then compare (local, free). Comparing needs at least one product photo; missing photos can be added later with **Add product photos**, which saves a new version and keeps the old one. Products stay "detailed verification pending" until a separately approved Sol run.
 - **Advanced workspace** (`/sourcing/workspace`): every reference and fingerprint, run history and progress, SigLIP and Sol results, full evidence, provenance and offline runs from saved evidence.
 
 See [docs/visual-sourcing-web-experience.md](docs/visual-sourcing-web-experience.md).

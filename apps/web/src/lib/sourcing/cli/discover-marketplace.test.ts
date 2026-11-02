@@ -60,7 +60,14 @@ function fakeApify(opts: { start?: () => Promise<ApifyRun>; status?: ApifyRun["s
   };
 }
 
-function harness(api = fakeApify(), env: Record<string, string> = { APIFY_TOKEN: TOKEN }) {
+/**
+ * TEST DOUBLE: these tests exercise what happens after a source is eligible
+ * (journals, caps, uncertain starts). The real eligibility gate, which blocks
+ * this scraper by project policy, is tested below and in discovery/authorization.test.ts.
+ */
+const eligibleForTests = async (mode: "image" | "keyword" | "hybrid") => ({ providerId: "apify-alibaba-discovery", mode, eligible: true, checks: [], blocker: null, limits: null });
+
+function harness(api = fakeApify(), env: Record<string, string> = { APIFY_TOKEN: TOKEN }, checkAccess: typeof eligibleForTests | null = eligibleForTests) {
   const out: string[] = [];
   const err: string[] = [];
   const createClient = vi.fn(() => api);
@@ -85,6 +92,7 @@ function harness(api = fakeApify(), env: Record<string, string> = { APIFY_TOKEN:
         convertAvif: null,
         now: () => new Date(),
         sleep: async () => {},
+        checkAccess: checkAccess ?? undefined, // null: the real gate
         io: { out: (l) => out.push(l), err: (l) => err.push(l) },
       }),
   };
@@ -94,6 +102,18 @@ const live = ["--case", TEST_CASE, "--provider", "apify", "--live", "--max-resul
 const runDirs = async () => (await readdir(join(dir, "evals/local/discovery", TEST_CASE))).filter((d) => d.startsWith("disc-"));
 
 describe("discover:marketplace", () => {
+  it("is blocked by the real eligibility gate even with a token and every flag: the provider scrapes, which project policy forbids", async () => {
+    const h = harness(fakeApify(), { APIFY_TOKEN: TOKEN }, null);
+    expect(await h.run(...live, "--mode", "keyword")).toBe(DISCOVER_EXIT_USAGE);
+    expect(h.err.join("\n")).toMatch(/Live discovery is blocked: Project rules allow only an official API or an approved partner/);
+    expect(h.createClient).not.toHaveBeenCalled();
+    const dry = harness(fakeApify(), { APIFY_TOKEN: TOKEN }, null);
+    expect(await dry.run("--case", TEST_CASE, "--provider", "apify", "--mode", "keyword", "--dry-run")).toBe(DISCOVER_EXIT_OK);
+    expect(dry.text()).toMatch(/Source eligibility: BLOCKED for live use/);
+    expect(dry.text()).toMatch(/BLOCKED policy:/);
+    expect(dry.createClient).not.toHaveBeenCalled();
+  });
+
   it("dry run validates the reference and plans without any provider call", async () => {
     const h = harness();
     expect(await h.run("--case", TEST_CASE, "--provider", "apify", "--mode", "hybrid", "--image-transport", "apify-storage")).toBe(DISCOVER_EXIT_OK);

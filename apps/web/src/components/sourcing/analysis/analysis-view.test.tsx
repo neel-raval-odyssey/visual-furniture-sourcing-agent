@@ -103,7 +103,8 @@ describe("upload page states", () => {
     const page = primary(html);
     expect(page).toContain("Your furniture has been analyzed");
     expect(page).toContain("Finding similar products is the next step.");
-    expect(page).toContain("Ready for product discovery");
+    expect(page).toContain("Next: Find similar products");
+    expect(html).toContain(`href="/sourcing/find/${status.attempt.caseId}"`);
     expect(page).toMatch(/Chair · Dining chair/);
     expect(page).toMatch(/Backrest curve ?: deep continuous curve/);
     expect(page).toMatch(/Leg count ?: 4/);
@@ -124,7 +125,7 @@ describe("upload page states", () => {
     const page = primary(render(status));
     expect(page).toContain("We couldn't identify a clear furniture item in this photo.");
     expect(page).toContain("Nothing was saved as a furniture reference.");
-    expect(page).not.toMatch(/has been analyzed|Ready for product discovery|Chair/);
+    expect(page).not.toMatch(/has been analyzed|Find similar products|Chair/);
   });
 
   it("uncertain outcome: warns about a possible charge and offers no instant retry", async () => {

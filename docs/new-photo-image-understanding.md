@@ -255,7 +255,7 @@ Not run during implementation. A developer who chooses to make the first paid we
 
 ## 17. Remaining marketplace-discovery limitations
 
-An analysed photo stops at "Ready for product discovery". Getting genuine candidates for it still needs one of the following:
+An analysed photo continues at "Find similar products" (P1-008, [new-reference-candidate-acquisition.md](new-reference-candidate-acquisition.md)), where products can now be recorded in the web app. Getting genuine candidates for it still needs one of the following:
 - **Authorized automated discovery:** P1-004's provider is implemented but not authorized for live use. Image search would also need an approved way to give the provider the photo.
 - **Operator-assisted intake:** a person records candidates (`pnpm source:candidates --case <case> --prepare` / `--run`). The command reads the same saved record, but it hasn't been tried with an upload reference, and it isn't exposed in the web app.
 

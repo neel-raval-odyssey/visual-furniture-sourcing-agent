@@ -1,5 +1,7 @@
 # Automated marketplace discovery
 
+> **P1-008:** live use (`--live`, `--resume`, `--fetch-images`) now also requires the source-eligibility check in `discovery/authorization.ts`. This Actor fails its policy check (scraping), so live discovery is blocked; `--data-use-reviewed` alone never enables it. See [marketplace-source-authorization.md](marketplace-source-authorization.md).
+
 How `pnpm discover:marketplace` finds Alibaba.com candidates for a reference without manual searching, and what has and has not been established. Written for P1-004 on 2026-10-27.
 
 **Status: implemented, awaiting an authorized live provider test.** No provider request has been made. Image search through this provider is advertised, not validated.

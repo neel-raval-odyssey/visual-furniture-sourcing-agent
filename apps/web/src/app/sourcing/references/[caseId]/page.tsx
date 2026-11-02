@@ -105,9 +105,14 @@ export default async function ReferencePage({ params }: Params) {
             ) : !latest ? (
               <p className="mt-2 text-sm text-ink-soft">
                 {ref.candidates.state !== "completed"
-                  ? "No marketplace candidates have been collected for this reference. Automated discovery awaits authorized provider access; operator-recorded candidates can be added with pnpm source:candidates."
+                  ? "No marketplace candidates have been collected for this reference. Automated discovery awaits authorized provider access; operator-recorded candidates can be added in the web app or with pnpm source:candidates."
                   : "This reference cannot be run from saved evidence."}
               </p>
+            ) : null}
+            {ref.candidates.state === "missing" && ref.understanding === "furniture_identified" && !ref.synthetic ? (
+              <Link href={`/sourcing/find/${caseId}`} className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-line-strong px-5 text-sm font-medium text-ink hover:border-ink">
+                Record candidate products <Icon name="forward" className="h-4 w-4" />
+              </Link>
             ) : null}
           </div>
           {ref.fingerprint ? (

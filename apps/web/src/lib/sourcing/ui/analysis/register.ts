@@ -35,8 +35,11 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export const IMAGE_MAP_LOCK_STALE_MS = 30_000;
 
 /** Runs `fn` while holding <images.json>.lock (exclusive create; waits up to `timeoutMs`). */
-export async function withImageMapLock<T>(mapPath: string, fn: () => Promise<T>, timeoutMs = 10_000): Promise<T> {
-  const lock = `${mapPath}.lock`;
+export const withImageMapLock = <T>(mapPath: string, fn: () => Promise<T>, timeoutMs = 10_000) => withFileLock(mapPath, fn, timeoutMs);
+
+/** Runs `fn` while holding `<path>.lock`: an exclusively created file shared by every process; abandoned locks expire. */
+export async function withFileLock<T>(path: string, fn: () => Promise<T>, timeoutMs = 10_000): Promise<T> {
+  const lock = `${path}.lock`;
   const token = randomUUID();
   const deadline = Date.now() + timeoutMs;
   for (;;) {
@@ -50,7 +53,7 @@ export async function withImageMapLock<T>(mapPath: string, fn: () => Promise<T>,
       } catch {
         // The lock disappeared between the attempts; try again.
       }
-      if (Date.now() > deadline) throw new RegistrationError("image_map_busy", "The image mapping is locked by another update");
+      if (Date.now() > deadline) throw new RegistrationError("image_map_busy", "The file is locked by another update; try again");
       await wait(25 + Math.random() * 50);
     }
   }

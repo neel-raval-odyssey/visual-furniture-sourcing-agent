@@ -5,6 +5,7 @@ import { DEFAULT_MODEL_ID } from "../shortlisting/protocol";
 import { VISUAL_VERIFICATION_INSTRUCTIONS_VERSION } from "../verification/openai/instructions";
 import { DEFAULT_VERIFICATION_REQUEST_SETTINGS, DEFAULT_VISUAL_VERIFICATION_MODEL } from "../verification/openai/verification-client";
 import { CASE_ID, getReference, listRuns, type Paths } from "./data";
+import { readCollection } from "./intake/revision";
 
 /**
  * "Run using saved evidence": the P1-005 orchestrator over the case's curated
@@ -64,6 +65,11 @@ export async function startOfflineRun(paths: Paths, caseId: string, deps: { runn
     if (!reference) return { ok: false, status: 404, code: "not_found", message: "No such reference" };
     if (reference.synthetic || reference.understanding !== "furniture_identified" || reference.candidates.state !== "completed") {
       return { ok: false, status: 409, code: "not_eligible", message: "This reference has no saved fingerprint and completed candidate set to run from." };
+    }
+    // A comparison needs at least one product photo; otherwise it could only return empty cards.
+    const collection = await readCollection(paths, caseId);
+    if (collection && collection.withPhoto === 0) {
+      return { ok: false, status: 409, code: "not_eligible", message: "Add at least one product photo to compare its design with your furniture." };
     }
     if ((await listRuns(paths, caseId)).some((r) => r.status === "running")) {
       return { ok: false, status: 409, code: "already_running", message: "A sourcing run for this reference is already in progress." };

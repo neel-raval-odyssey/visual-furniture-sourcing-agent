@@ -7,6 +7,7 @@ import { candidateManifestSchema, type CandidateManifest } from "../discovery/cu
 import { acquireListingImages, type ImageOutcome } from "../discovery/images/acquire-images";
 import { DEFAULT_IMAGE_FETCH_POLICY, safeFetchImage, type FetchedImage } from "../discovery/images/safe-image-fetch";
 import {
+  APIFY_PROVIDER_ID,
   buildImageSearchInput,
   buildKeywordInput,
   LIMITS,
@@ -32,6 +33,7 @@ import { inspectImage } from "../image-input/inspect";
 import { EvidenceError, resolveReferenceImage } from "../shortlisting/evidence";
 import { loadSavedFingerprint, SavedRunError, type SavedFingerprint } from "../understanding/saved/saved-fingerprint";
 import type { CliIO } from "./analyze-image";
+import { checkSourceEligibility, loadAccessRecord, type DiscoveryMode, type SourceEligibility } from "../discovery/authorization";
 
 /**
  * Automated Alibaba.com candidate discovery through a configured provider
@@ -61,6 +63,12 @@ export interface DiscoverMarketplaceCliDeps {
   convertAvif?: ((avifPath: string, sha256: string, pngPath: string) => Promise<void>) | null;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
+  /**
+   * Source eligibility (policy, recorded access, image-transfer approval, live
+   * switch). Defaults to checkSourceEligibility over evals/local/marketplace-access.json.
+   * Flags such as --data-use-reviewed are per-run confirmations on top of it, never a substitute.
+   */
+  checkAccess?: (mode: DiscoveryMode) => Promise<SourceEligibility>;
 }
 
 export const DISCOVER_USAGE = `Automated Alibaba.com candidate discovery via a configured provider (default: dry run, nothing sent).
@@ -333,6 +341,18 @@ export async function runDiscoverMarketplaceCli(argv: string[], deps: DiscoverMa
   };
   const fetchImage = deps.fetchImage ?? ((url: string, allowedDomains: readonly string[]) => safeFetchImage(url, { ...DEFAULT_IMAGE_FETCH_POLICY, allowedDomains }));
   const convertAvif = deps.convertAvif !== undefined ? deps.convertAvif : pythonConverter(deps.repoRoot);
+  const checkAccess =
+    deps.checkAccess ??
+    (async (mode: DiscoveryMode) =>
+      checkSourceEligibility({ providerId: APIFY_PROVIDER_ID, mode, env: deps.env, access: await loadAccessRecord(join(deps.repoRoot, "evals/local/marketplace-access.json")) }));
+  /** Every action that contacts the provider or the marketplace passes this first. */
+  const requireAccess = async (mode: DiscoveryMode) => {
+    const eligibility = await checkAccess(mode);
+    if (!eligibility.eligible) {
+      throw new Problem(DISCOVER_EXIT_USAGE, `Live discovery is blocked: ${eligibility.blocker}. See docs/marketplace-source-authorization.md.`);
+    }
+    return eligibility;
+  };
 
   const loadSaved = async (): Promise<SavedFingerprint> => {
     try {
@@ -452,6 +472,7 @@ export async function runDiscoverMarketplaceCli(argv: string[], deps: DiscoverMa
       }
 
       if (action === "fetch-images") {
+        await requireAccess("keyword");
         if (!flag("data-use-reviewed")) return usage("--fetch-images needs --data-use-reviewed (image retrieval must be permitted for this use)");
         if (!journal.manifestFile) throw new Problem(DISCOVER_EXIT_USAGE, "That run has no manifest yet");
         const manifestPath = join(runDir, journal.manifestFile);
@@ -473,7 +494,8 @@ export async function runDiscoverMarketplaceCli(argv: string[], deps: DiscoverMa
         return DISCOVER_EXIT_OK;
       }
 
-      // Resume: never starts a run; reconciles and finishes existing ones.
+      // Resume: never starts a run; reconciles and finishes existing ones. It still contacts the provider.
+      await requireAccess("keyword");
       const api = client();
       const uncertain = journal.runs.filter((r) => r.state === "start_uncertain" || (r.state === "start_requested" && !r.providerRunId));
       if (uncertain.length) {
@@ -545,6 +567,9 @@ export async function runDiscoverMarketplaceCli(argv: string[], deps: DiscoverMa
       lines.push(`Cost cap: $${costCap}${cost === undefined ? " (default for planning; --live requires --max-provider-cost-usd)" : ""}; estimate $${plan.estimatedUsd}.`);
       for (const p of plan.problems) lines.push(`PROBLEM: ${p}`);
       lines.push(`APIFY_TOKEN: ${token ? "set" : "NOT SET (required for --live)"}`);
+      const eligibility = await checkAccess(mode);
+      lines.push(`Source eligibility: ${eligibility.eligible ? "ELIGIBLE for live use" : "BLOCKED for live use"}`);
+      for (const c of eligibility.checks) lines.push(`  ${c.ok ? "ok     " : "BLOCKED"} ${c.key}: ${c.detail}`);
       lines.push(
         needsImage
           ? `Image submission: ${transportKind === "url" ? `user-hosted URL ${str("image-url")} (sent as imageUrls; its bytes are checked against the reference hash before the run)` : transportKind === "apify-storage" ? "temporary upload to your own Apify storage, sent as imageFile (UNVERIFIED with this Actor: its imageFile handling is undocumented); deleted after the run" : "NOT CONFIGURED (choose --image-transport url --image-url <https URL> or --image-transport apify-storage)"}; requires --authorize-image-upload`
@@ -558,9 +583,13 @@ export async function runDiscoverMarketplaceCli(argv: string[], deps: DiscoverMa
       return DISCOVER_EXIT_OK;
     }
 
-    // Live: every authorization explicit.
+    // Live: the source must be eligible, and every per-run authorization explicit.
+    const eligibility = await requireAccess(mode);
     if (maxResultsRaw === undefined) return usage("--live requires --max-results <n>");
     if (cost === undefined) return usage("--live requires --max-provider-cost-usd <usd>");
+    if (eligibility.limits && (maxResults > eligibility.limits.maxResults || cost > eligibility.limits.maxCostUsd)) {
+      return usage(`the access record caps this provider at ${eligibility.limits.maxResults} results and $${eligibility.limits.maxCostUsd} per run`);
+    }
     if (!flag("data-use-reviewed")) return usage("--live requires --data-use-reviewed: review the provider's terms and Alibaba.com's restrictions first (docs/automated-marketplace-discovery.md)");
     if (needsImage && !flag("authorize-image-upload")) return usage("image search sends your reference photo to the provider: add --authorize-image-upload to allow it");
     if (needsImage && !transportKind) return usage("image search needs --image-transport url|apify-storage");

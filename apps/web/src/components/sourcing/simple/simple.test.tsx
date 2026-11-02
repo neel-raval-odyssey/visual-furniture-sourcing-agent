@@ -103,7 +103,7 @@ describe("simple results", () => {
   it("keeps unverified products separate and unscored, and the scores behind a disclosure", () => {
     const { notCompared } = splitResults(result);
     expect(notCompared.map((e) => e.listingId)).toContain(LISTING_C);
-    for (const e of notCompared) expect(plainVerdict(e)).toMatchObject({ label: "Not yet compared", compared: false });
+    for (const e of notCompared) expect(plainVerdict(e)).toMatchObject({ label: "Photo needed", compared: false }); // neither has a usable photo
     const page = primary(html());
     expect(page).toContain("Not yet compared");
     expect(page).toContain("Only a link to the listing photo was saved");
@@ -144,7 +144,7 @@ describe("simple comparison", () => {
 
   it("does not invent a comparison for a product without one", () => {
     const page = primary(view(LISTING_C));
-    expect(page).toContain("Not yet compared");
+    expect(page).toContain("Photo needed"); // only a remote image link was recorded
     expect(page).not.toContain("What looks similar");
     expect(page).not.toMatch(/\d+\s*\/\s*100/);
   });
