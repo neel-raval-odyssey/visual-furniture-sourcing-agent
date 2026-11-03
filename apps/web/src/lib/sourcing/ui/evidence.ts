@@ -7,6 +7,7 @@ import { loadSavedFingerprint, SavedRunError } from "../understanding/saved/save
 import { CASE_ID, getRun, LISTING_ID, RUN_ID, runManifestDir, type Paths } from "./data";
 import { ENTRY_ID, INTAKE_ID, readEntryImage } from "./intake/intake";
 import { readCollectionImage } from "./intake/revision";
+import { DISCOVERY_ID, readDiscoveryImage } from "./discovery/automatic-search";
 import { getUpload, UPLOAD_ID } from "./uploads";
 
 /**
@@ -17,6 +18,7 @@ import { getUpload, UPLOAD_ID } from "./uploads";
  *   upload/<upload id>               → a staged upload
  *   intake/<case>/<intake>/<product> → a product photo recorded in a draft candidate intake
  *   collection/<case>/<n>            → the photo of the n-th product in the published collection
+ *   discovery/<case>/<search>/<n>    → the cached photo of the n-th product of a saved automatic search
  * The file path always comes from trusted records, must stay inside its
  * approved folder (no symlinks, no escapes), must be a PNG/JPEG/WebP within the
  * size limit, and must still have the SHA-256 recorded for it. Errors never
@@ -104,6 +106,9 @@ export async function resolveEvidence(paths: Paths, parts: string[]): Promise<Ev
   }
   if (kind === "collection" && rest.length === 2 && CASE_ID.test(rest[0]) && /^\d{1,2}$/.test(rest[1])) {
     return (await readCollectionImage(paths, rest[0], Number(rest[1]))) ?? fail(404, "no_image", "No photo was recorded for this product");
+  }
+  if (kind === "discovery" && rest.length === 3 && CASE_ID.test(rest[0]) && DISCOVERY_ID.test(rest[1]) && /^\d{1,2}$/.test(rest[2])) {
+    return (await readDiscoveryImage(paths, rest[0], rest[1], Number(rest[2]))) ?? fail(404, "no_image", "No photo was saved for this product");
   }
   if (kind === "intake" && rest.length === 3 && CASE_ID.test(rest[0]) && INTAKE_ID.test(rest[1]) && ENTRY_ID.test(rest[2])) {
     return (await readEntryImage(paths, rest[0], rest[1], rest[2])) ?? fail(404, "no_image", "No photo was recorded for this product");

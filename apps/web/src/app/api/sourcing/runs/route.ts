@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 /**
  * Starts an offline sourcing run from saved evidence ({ caseId, mode:
- * "offline-saved-evidence" }). Uses the P1-005 orchestrator; no marketplace,
+ * "offline-saved-evidence", discoveryId? }). Uses the P1-005 orchestrator; no marketplace,
  * image-download or paid model request is possible through this route.
  */
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   if (!(request.headers.get("content-type") ?? "").startsWith("application/json")) {
     return Response.json({ error: "invalid_request", message: "Expected JSON." }, { status: 415 });
   }
-  let body: { caseId?: unknown; mode?: unknown };
+  let body: { caseId?: unknown; mode?: unknown; discoveryId?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -23,7 +23,11 @@ export async function POST(request: Request) {
   if (body.mode !== "offline-saved-evidence" || typeof body.caseId !== "string") {
     return Response.json({ error: "invalid_request", message: 'Only { caseId, mode: "offline-saved-evidence" } is supported.' }, { status: 400 });
   }
-  const outcome = await startOfflineRun(localPaths(), body.caseId);
+  if (body.discoveryId !== undefined && typeof body.discoveryId !== "string") {
+    return Response.json({ error: "invalid_request", message: "discoveryId must be a string." }, { status: 400 });
+  }
+  // Optional: compare a saved automatic-search product set instead of the hand-collected list.
+  const outcome = await startOfflineRun(localPaths(), body.caseId, {}, typeof body.discoveryId === "string" ? { kind: "automatic", discoveryId: body.discoveryId } : { kind: "collection" });
   if (!outcome.ok) return Response.json({ error: outcome.code, message: outcome.message }, { status: outcome.status });
   return Response.json({ runId: outcome.runId, status: outcome.status, externalRequests: 0 }, { status: 201, headers: { "Cache-Control": "no-store" } });
 }

@@ -196,7 +196,7 @@ describe("from recorded products to a local comparison", () => {
     const html = renderToStaticMarkup(<SimpleResultsView caseId={caseId} runId={outcome.runId} result={result} />);
     const page = html.replace(/<details[\s\S]*<\/details>/g, "").replace(/<[^>]+>/g, " ");
     expect(page).toContain("Products to compare");
-    expect(page).toContain("Potentially similar products — detailed comparison pending");
+    expect(page).toContain("Potentially similar products — detailed verification pending");
     expect(page).toContain("recorded by hand from Alibaba.com");
     expect(page).not.toMatch(/Closest design found|Close design|Similar alternative|\/100|SigLIP|cosine/);
     expect(page.indexOf("[TEST] Nesting table 1")).toBeLessThan(page.indexOf("[TEST] Nesting table 3"));

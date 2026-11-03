@@ -7,6 +7,7 @@ import type { CandidateManifest } from "../discovery/curated/manifest";
 import { describeDiscoveryState, normalizeSavedRuns, type DiscoveryStateView } from "../discovery/providers/apify/discovery-run";
 import { JournalError, loadJournal } from "../discovery/providers/apify/run-journal";
 import { ProviderSchemaError } from "../discovery/providers/apify/normalize";
+import { normalizeExaSavedRuns } from "../discovery/providers/exa/discovery-run";
 import type { CandidateListing } from "../domain";
 import type { ImageSimilarityRunner } from "../shortlisting/embedding-client";
 import { EmbeddingProtocolError, EmbeddingServiceError } from "../shortlisting/protocol";
@@ -138,13 +139,17 @@ export async function loadProviderRunCandidates(runDir: string, label: string, r
     if (journal.dataSource === "mock" && !synthetic) throw new StageError("failed", "Discovery run is synthetic; pass --synthetic to use it");
     const state = describeDiscoveryState(journal);
     if (state.externalWorkPending) {
-      throw new StageError("blocked", `Discovery run ${journal.discoveryId}: ${state.meaning}. Resume it with discover:marketplace --resume (not done here).`);
+      const resume = journal.provider.service === "exa" ? "discover:products --resume" : "discover:marketplace --resume";
+      throw new StageError("blocked", `Discovery run ${journal.discoveryId}: ${state.meaning}. Resume it with ${resume} (not done here).`);
     }
     if (state.snapshotsAvailable === 0) {
       throw new StageError("failed", `Discovery run ${journal.discoveryId}: ${state.meaning}. No candidates are available; this is not an empty result.`);
     }
     // Diagnostics always come from the saved snapshots, so provider error rows and rejections stay visible.
-    const normalized = await normalizeSavedRuns(runDir, journal, ref.saved);
+    const normalized =
+      journal.provider.service === "exa"
+        ? await normalizeExaSavedRuns(runDir, journal, ref.saved).then((build) => ({ build, providerErrors: [] as { mode: string; code: string; message: string }[] }))
+        : await normalizeSavedRuns(runDir, journal, ref.saved);
     let manifest = normalized.build.manifest;
     let manifestSha256 = sha256(JSON.stringify(manifest));
     let origin: DiscoveryDiagnostics["manifestOrigin"] = "normalized_offline_from_snapshots";
@@ -189,7 +194,7 @@ export async function loadProviderRunCandidates(runDir: string, label: string, r
 
 /** Live provider acquisition is not authorized; the stage is always blocked. */
 export const LIVE_DISCOVERY_BLOCKER =
-  "Live provider acquisition is disabled: access and data-use authorization for the third-party provider (Apify Actor scrapewise/alibaba-com-scraper) has not been established, and AGENTS.md requires a confirmed, authorized integration. A --data-use-reviewed flag is not proof of authorization.";
+  "Live provider acquisition is not part of a sourcing run: run a discovery first (pnpm discover:products, or Search automatically in the web app, once a source is eligible), then use --source provider-run. No source is currently authorized: the Apify Actor is a scraper, and Exa is an external search index; AGENTS.md requires an official API or approved partner. A --data-use-reviewed flag is not proof of authorization.";
 
 export function sourceLabel(source: CandidateSourceSpec): string {
   return source.kind === "curated" ? `curated manifest ${source.manifest}` : source.kind === "provider-run" ? `saved discovery run ${source.discoveryRun}` : "live provider acquisition";

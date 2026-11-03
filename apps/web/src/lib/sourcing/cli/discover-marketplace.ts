@@ -1,10 +1,10 @@
-import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { candidateManifestSchema, type CandidateManifest } from "../discovery/curated/manifest";
 import { acquireListingImages, type ImageOutcome } from "../discovery/images/acquire-images";
+import { pythonAvifConverter as pythonConverter } from "../discovery/images/avif-converter";
 import { DEFAULT_IMAGE_FETCH_POLICY, safeFetchImage, type FetchedImage } from "../discovery/images/safe-image-fetch";
 import {
   APIFY_PROVIDER_ID,
@@ -104,35 +104,6 @@ class Problem extends Error {
   ) {
     super(message);
   }
-}
-
-function pythonConverter(repoRoot: string) {
-  const serviceDir = join(repoRoot, "services/vision");
-  const python = join(serviceDir, ".venv/bin/python");
-  return (avifPath: string, sha256: string, pngPath: string) =>
-    new Promise<void>((resolvePromise, reject) => {
-      execFile(
-        python,
-        ["-m", "vfsa_vision", "convert", "--input", avifPath, "--sha256", sha256, "--output", pngPath],
-        {
-          cwd: serviceDir,
-          timeout: 60_000,
-          encoding: "utf8",
-          // Only what Python needs; NodeJS.ProcessEnv is augmented by Next.js to require NODE_ENV.
-          env: { PATH: process.env.PATH ?? "", PYTHONDONTWRITEBYTECODE: "1" } as unknown as NodeJS.ProcessEnv,
-        },
-        (error: Error | null, stdout: string) => {
-          if (!error) return resolvePromise();
-          let message = "AVIF conversion failed";
-          try {
-            message = (JSON.parse(stdout) as { error?: { message?: string } }).error?.message ?? message;
-          } catch {
-            // keep the generic message
-          }
-          reject(new Error(message));
-        },
-      );
-    });
 }
 
 interface Summary {

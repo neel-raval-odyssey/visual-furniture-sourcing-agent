@@ -48,7 +48,7 @@ export type AcquisitionMethod = "provider_api" | "operator_assisted";
 export interface ProviderSource {
   /** e.g. "apify-alibaba-discovery". */
   providerId: string;
-  access: "official_api" | "third_party_service";
+  access: "official_api" | "third_party_service" | "external_search_index";
   /** Provider run or request ids that returned the record. */
   runIds: string[];
 }

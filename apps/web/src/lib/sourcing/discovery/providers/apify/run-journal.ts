@@ -61,9 +61,9 @@ export const discoveryRunSchema = z.strictObject({
   status: z.enum(["planned", "in_progress", "pending_provider", "completed", "failed"]),
   provider: z.strictObject({
     providerId: z.string().min(1),
-    service: z.literal("apify"),
+    service: z.enum(["apify", "exa"]),
     source: z.string().min(1),
-    access: z.literal("third_party_service"),
+    access: z.enum(["third_party_service", "external_search_index"]),
   }),
   reference: z.strictObject({ referenceImageId: z.string().min(1), fingerprintId: z.string().min(1), sha256: z.string().regex(/^[0-9a-f]{64}$/) }),
   request: z.strictObject({
@@ -73,6 +73,12 @@ export const discoveryRunSchema = z.strictObject({
     imageTransport: z.strictObject({ kind: z.enum(["url", "apify_storage"]), url: z.string() }).nullable(),
     downloadImages: z.boolean(),
     imagesPerListing: z.int().positive(),
+    /** Exa: results requested per query (each query is one search request). */
+    resultsPerQuery: z.int().positive().optional(),
+    /** Exa: whether full provider responses may be kept (from the access record); otherwise only the fields used are saved. */
+    retainRawResponses: z.boolean().optional(),
+    /** Idempotency key of the confirmation that started this run (web UI); a repeated submission returns this run. */
+    requestKey: z.string().regex(/^[0-9a-f-]{36}$/).optional(),
   }),
   runs: z.array(runEntrySchema).min(1),
   storageUpload: z

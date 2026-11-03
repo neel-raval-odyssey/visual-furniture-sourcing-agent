@@ -36,7 +36,7 @@ export const acquisitionMethodSchema = z.enum(["provider_api", "operator_assiste
 
 export const providerSourceSchema = z.strictObject({
   providerId: nonEmptyStringSchema,
-  access: z.enum(["official_api", "third_party_service"]),
+  access: z.enum(["official_api", "third_party_service", "external_search_index"]),
   runIds: z.array(nonEmptyStringSchema),
 });
 

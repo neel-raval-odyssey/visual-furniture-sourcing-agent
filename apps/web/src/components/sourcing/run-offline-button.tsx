@@ -9,7 +9,18 @@ import { Icon } from "./primitives";
  * pending state lasts exactly as long as the request (the orchestrator runs
  * inside it); there is no simulated progress.
  */
-export function RunOfflineButton({ caseId, simple = false, label = "Compare with your photo" }: { caseId: string; simple?: boolean; label?: string }) {
+export function RunOfflineButton({
+  caseId,
+  simple = false,
+  label = "Compare with your photo",
+  discoveryId,
+}: {
+  caseId: string;
+  simple?: boolean;
+  label?: string;
+  /** Compare a saved automatic-search product set instead of the hand-collected list. */
+  discoveryId?: string;
+}) {
   const router = useRouter();
   const [state, setState] = useState<{ kind: "idle" } | { kind: "running" } | { kind: "error"; message: string }>({ kind: "idle" });
 
@@ -19,7 +30,7 @@ export function RunOfflineButton({ caseId, simple = false, label = "Compare with
       const res = await fetch("/api/sourcing/runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ caseId, mode: "offline-saved-evidence" }),
+        body: JSON.stringify({ caseId, mode: "offline-saved-evidence", ...(discoveryId ? { discoveryId } : {}) }),
       });
       const body = (await res.json()) as { runId?: string; message?: string };
       if (!res.ok || !body.runId) {

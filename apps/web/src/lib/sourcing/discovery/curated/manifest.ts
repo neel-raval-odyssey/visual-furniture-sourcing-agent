@@ -119,8 +119,12 @@ export const captureProviderSchema = z.strictObject({
   service: nonEmptyStringSchema,
   /** e.g. "scrapewise/alibaba-com-scraper". */
   source: nonEmptyStringSchema,
-  /** A third-party service is not an official Alibaba.com API. */
-  access: z.enum(["official_api", "third_party_service"]),
+  /**
+   * official_api: Alibaba.com's own API. third_party_service: a third-party
+   * scraper service. external_search_index: a web search index that found the
+   * listing pages (not Alibaba.com, and not a verification of the listing).
+   */
+  access: z.enum(["official_api", "third_party_service", "external_search_index"]),
   runs: z
     .array(
       z.strictObject({

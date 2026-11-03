@@ -41,7 +41,8 @@ All P1-006 deep links under `/sourcing/references/…` are unchanged.
 | `references/[caseId]/page.tsx` | The saved Luna fingerprint (structure, appearance and distinctive features, each labelled with its certainty), runs, next action |
 | `references/[caseId]/runs/[runId]/page.tsx` | Results: overview counts; the closest verified design next to the reference; verified candidates in Sol order (with an optional SigLIP retrieval order via `?sort=retrieval`); unverified candidates listed separately; the recorded stage timeline; warnings, follow-ups and model provenance |
 | `…/candidates/[listingId]/page.tsx` | Comparison: reference and candidate photos (full-size view, no overlays), grouped Sol evidence, product and supplier facts |
-| `find/[caseId]/page.tsx` | Find similar products for an analysed photo: record products, add missing photos as a new version, compare only once a product has a photo |
+| `find/[caseId]/page.tsx` | Find similar products for an analysed photo: automatic search (available only when a source is eligible) and its saved searches with real stages; record products by hand, add missing photos as a new version; compare only once a product has a photo |
+| `find/[caseId]/search/page.tsx` | Confirmation before an automatic search: source, what is sent (text only), charges and cap, limits, photo handling, supplier/price provenance. Viewing it sends nothing; "Confirm and search" is shown only when eligible ([automated-sourcing-live-provider.md](automated-sourcing-live-provider.md)) |
 | `uploads/[uploadId]/page.tsx` | A staged upload and its analysis: ready, confirming, analyzing, analyzed (plain-English furniture summary), not identified, failed or uncertain |
 | `layout.tsx` | The shell and the local-access explanation |
 
@@ -53,7 +54,8 @@ All P1-006 deep links under `/sourcing/references/…` are unchanged.
 | `POST uploads` | Stage a photo |
 | `POST intake/[caseId]` | Operator-assisted product intake: start, revise, save, photo, remove, complete, discard ([new-reference-candidate-acquisition.md](new-reference-candidate-acquisition.md)) |
 | `GET`/`POST uploads/[uploadId]/analysis` | Analysis status (read-only); one confirmed GPT-6 Luna analysis, or finishing an already-paid save |
-| `POST runs` | Offline run from saved evidence |
+| `POST discovery/[caseId]` | Automatic product search (`{action:"start", requestKey, confirmed:true}`) or photo preparation (`{action:"images", discoveryId}`). Eligibility is checked on the server for every call; a repeated request key returns the same search; one unfinished search per case |
+| `POST runs` | Offline run from saved evidence; optional `discoveryId` compares a saved automatic search instead of the hand-collected list |
 | `GET runs/[caseId]/[runId]` | Stage states, for bounded polling |
 
 **Components** (`apps/web/src/components/sourcing/`):
@@ -120,6 +122,7 @@ pnpm dev:local          # VFSA_LOCAL_SOURCING_UI=1 next dev -H 127.0.0.1
 | `upload/<upload id>` | A staged upload |
 | `intake/<case>/<intake>/<product>` | A product photo in a draft product list (hash-checked) |
 | `collection/<case>/<n>` | The photo of the n-th product in the current saved list (confined to the candidates folder) |
+| `discovery/<case>/<search>/<n>` | The cached photo of the n-th product of a saved automatic search (confined to that search's folder; file name re-checked against the SHA-256) |
 
 **Each file must:**
 - be inside its approved folder (`evals/local/candidates`, `evals/local/discovery` or `evals/discovery`, under `<case>/`), with symlinks and escapes refused;
@@ -187,21 +190,22 @@ The run page polls `GET /api/sourcing/runs/<case>/<run>` only while the journal 
 ## 11. Marketplace-provider limitations
 
 The workspace states: "Automated marketplace discovery is awaiting authorized provider access."
-- **No live search button:** the Apify integration (P1-004) is not exposed.
+- **No live search button for a blocked source:** the Apify integration (P1-004) is not exposed. Automatic search (Exa, P1-009) shows a disabled button with its plain reason until the source is eligible; today it is blocked by project policy.
 - **What saved discovery runs can show:** only what they recorded. Remote-only images remain "cannot be visually compared".
 
 ## 12. No automatic charges
 
 **No route can:**
 - call GPT-6.1 Sol;
-- start provider discovery;
-- download marketplace images.
+- start provider discovery or download marketplace images, except `POST discovery/[caseId]` below.
 
 **One exception, explicitly confirmed:** `POST /api/sourcing/uploads/<id>/analysis` with `{"action":"analyze","attemptKey":…}` sends one GPT-6 Luna request for one staged photo, after the user confirms a dialog that explains the charge. It is reserved durably, never retried and never repeated automatically ([new-photo-image-understanding.md](new-photo-image-understanding.md)).
 
+**Second exception, explicitly confirmed and policy-gated:** `POST /api/sourcing/discovery/<case>` with `{"action":"start","requestKey":…,"confirmed":true}` sends at most four Exa search requests (one per saved query, never retried) after the confirmation page, and only when the source passes the eligibility check. Product photos are downloaded only with a separate image-retrieval approval. Today the check fails, so the route answers 409 and sends nothing.
+
 **Also guaranteed:**
 - **Rendering is read-only:** page rendering only reads files, and never runs a model; the analysis status endpoint is read-only too.
-- **Keys are not permission:** the presence of `OPENAI_API_KEY` or `APIFY_TOKEN` never starts anything. Tests stub both, and assert that `fetch` is never called.
+- **Keys are not permission:** the presence of `OPENAI_API_KEY`, `APIFY_TOKEN` or `EXA_API_KEY` never starts anything. Tests stub both, and assert that `fetch` is never called.
 
 ## 13. Testing and QA
 

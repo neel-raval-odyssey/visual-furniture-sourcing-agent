@@ -1,8 +1,8 @@
 # Marketplace source authorization
 
-Access decision for automated Alibaba.com candidate discovery. Written for P1-008 on 2026-10-27. It is a short, evidence-based record, not market research.
+Access decision for automated Alibaba.com candidate discovery. Written for P1-008 on 2026-10-27 and updated for P1-009 on 2026-11-03. It is a short, evidence-based record, not market research.
 
-**Decision: no source is authorized for live use. Automated discovery stays blocked, and the operator-assisted web intake is the working path.**
+**Decision (P1-009): Exa Search API selected and implemented as the automatic keyword source, but blocked for live use by project policy. No source is authorized for live use. The operator-assisted web intake remains the working path.**
 
 The project rule (`AGENTS.md`) is that Alibaba discovery may only use a confirmed, authorized integration: an official API or an approved partner, with no scraping. The code enforces this in `discovery/authorization.ts`. A token, an Actor subscription or `--data-use-reviewed` never establishes permission on its own.
 
@@ -45,6 +45,32 @@ The project rule (`AGENTS.md`) is that Alibaba discovery may only use a confirme
 | Limits and costs | Our caps: up to 50 results and $10 per invocation, refused if the published-price estimate exceeds the cap. Apify bills per result and event (see the P1-004 doc). |
 | Unresolved | Alibaba.com's written permission; Apify's and the Actor's terms; whether relying on the Actor's IP fallback is acceptable |
 | Live use | **Blocked by policy.** The scraping acquisition method is prohibited by `AGENTS.md`, so the eligibility check fails closed whatever is configured. Offline replay of synthetic fixtures still works. |
+
+## D. Exa Search API (P1-009 selected provider)
+
+| | |
+|---|---|
+| Provider | Exa Search API, `POST https://api.exa.ai/search`; provider id `exa-alibaba-index` |
+| Status | **External web search index.** Not an official Alibaba.com API and not an Alibaba.com partner. |
+| Acquisition method | `external_search_index`, a separate category in `discovery/authorization.ts`. Records say `capture.provider.access = "external_search_index"`. |
+| Verified API contract | Request: `query`, `type`, `numResults` (≤ 100), `includeDomains` (host plus path prefix supported), `contents.highlights`. Response: `requestId`, `results[]` (`url`, `title`, `id`, `publishedDate`, `image`, `highlights`), `costDollars.total`. There is no documented product category or product entity schema. |
+| Alibaba coverage | Only pages in Exa's index; not marketplace-wide. We search `www.alibaba.com/product-detail` pages only. |
+| Image search | None. Keyword search uses the saved Luna queries, and the reference photo is never sent. |
+| Supplier data | Not reported |
+| Prices | Excerpt text only. Exa itself says to confirm the price on the merchant's page. |
+| Image rights | Not granted by Exa. Downloading alicdn.com images needs its own approval (`productImageRetrievalApproved`). |
+| Data-use terms | The Exa ToS makes the customer responsible for not breaching third parties' terms (§1(b)), and Exa disclaims third-party materials (§6.1). Alibaba.com's permission: **none**. |
+| Credentials | `EXA_API_KEY`, server-side only |
+| Cost | $0.017 per query (search + highlights, list prices 2026-11-03). The 4-query run is about $0.068, with a cap from the access record (maximum $1). |
+| Live use | **Blocked by policy.** `AGENTS.md` permits only an official API or an approved partner. The eligibility check fails closed, whatever key or access record exists. |
+
+What enabling it would take:
+
+1. A person changes the project rule to permit an external search index for discovery and adds `"external_search_index"` to `POLICY_ALLOWED_ACQUISITION`.
+2. A review of Alibaba.com's terms for using the indexed listing data (and, separately, its images), recorded in the access record.
+3. `EXA_API_KEY`.
+
+See [automated-sourcing-live-provider.md](automated-sourcing-live-provider.md).
 
 ## What would change the decision
 

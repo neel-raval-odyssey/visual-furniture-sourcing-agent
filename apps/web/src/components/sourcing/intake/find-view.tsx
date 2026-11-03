@@ -7,12 +7,14 @@ import { EvidenceImage } from "../evidence-image";
 import { Badge, ExternalLink, Icon, Notice } from "../primitives";
 import { RunOfflineButton } from "../run-offline-button";
 import { Disclosure, PrimaryLink, SecondaryLink } from "../simple/parts";
+import { AutomaticSearchPanel, SavedSearches, type AutomaticAvailability } from "./automatic-search-view";
 import { CompleteButton, CopyButton, DiscardButton, EntryActions, EntryForm, PhotoUpload, StartIntakeButton, StartRevisionButton, type EntryFormValues } from "./intake-controls";
 
 /**
  * "Find similar products" for an analysed photo. Automatic marketplace search
- * is offered only when a source is actually eligible; otherwise the person
- * records products they found on Alibaba.com themselves. A saved list can be
+ * is offered only when a source is actually eligible (its saved searches are a
+ * separate product set); otherwise the person records products they found on
+ * Alibaba.com themselves. A saved list can be
  * revised (photos, corrections, more products) as a new version; the saved
  * version is kept. A comparison is offered only once a product has a photo.
  */
@@ -22,7 +24,8 @@ export interface FindViewProps {
   photoUrl: string | null;
   furnitureType: string;
   queries: string[];
-  automatic: { available: boolean; reason: string };
+  /** Whether an automatic source is eligible, and the saved automatic searches (a separate candidate set). */
+  automatic: AutomaticAvailability;
   intake: IntakeState;
   /** The current saved product list (any intake path), or null. */
   collection: { products: CollectionProduct[]; withPhoto: number; revisable: boolean } | null;
@@ -88,22 +91,6 @@ function ProductRow({ title, supplier, termsLine, listingUrl, imageUrl, hasPhoto
         {children}
       </div>
     </li>
-  );
-}
-
-function AutomaticSearch({ automatic }: { automatic: FindViewProps["automatic"] }) {
-  return (
-    <div className="rounded-2xl border border-line bg-paper p-5">
-      <p className="flex items-center gap-2 font-medium text-ink">
-        <Icon name="lock" className="h-4 w-4 text-muted" /> Automatic marketplace search
-      </p>
-      <p className="mt-1 text-sm text-ink-soft">{automatic.available ? "Available for this photo." : `Not available yet. ${automatic.reason}`}</p>
-      {!automatic.available ? (
-        <button type="button" disabled aria-disabled className="mt-3 inline-flex min-h-11 cursor-not-allowed items-center rounded-full border border-line px-4 text-sm text-muted">
-          Search automatically (unavailable)
-        </button>
-      ) : null}
-    </div>
   );
 }
 
@@ -183,9 +170,15 @@ export function FindView(props: FindViewProps) {
             <p className="text-sm text-ink-soft">Search Alibaba.com yourself, then record each product you find, with its supplier and a photo. It takes a few minutes per product, with no forms to edit by hand.</p>
             <StartIntakeButton caseId={caseId} />
           </div>
-          <AutomaticSearch automatic={automatic} />
+          <AutomaticSearchPanel caseId={caseId} automatic={automatic} />
+        </section>
+      ) : !draft ? (
+        <section className="max-w-xl">
+          <AutomaticSearchPanel caseId={caseId} automatic={automatic} />
         </section>
       ) : null}
+
+      {!draft ? <SavedSearches caseId={caseId} searches={automatic.searches ?? []} /> : null}
 
       {draft && !revising ? (
         <>
@@ -338,6 +331,7 @@ export function FindView(props: FindViewProps) {
             Reference {caseId}. The current product list is an operator-assisted candidate manifest in evals/local/candidates/{caseId}.json, which the existing intake, shortlisting, verification and sourcing commands read. Each saved version is kept in evals/local/candidate-intake/{caseId}/.
           </p>
           <p>Automatic search: {automatic.available ? "eligible" : automatic.reason}</p>
+          {automatic.providerLabel ? <p>Automatic source: {automatic.providerLabel}. Its searches are saved separately in evals/local/discovery/{caseId}/ and never change the hand-collected list.</p> : null}
           <SecondaryLink href={`/sourcing/references/${caseId}`}>Open in the advanced workspace</SecondaryLink>
         </div>
       </Disclosure>

@@ -14,7 +14,7 @@ An AI-powered furniture sourcing application. Given a reference photo of a piece
 > - **Provisional:** ranking.
 > - **Real, local:** a web interface for saved sourcing results — a plain-language simple view plus an advanced workspace with offline runs and private photo staging (`pnpm dev:local`).
 > - **Real, local:** operator-assisted product intake for a newly analysed photo in the web app (`/sourcing/find/<case>`), producing a standard candidate manifest for the existing shortlisting and sourcing steps. See [docs/new-reference-candidate-acquisition.md](docs/new-reference-candidate-acquisition.md).
-> - **Blocked:** automated marketplace discovery. No authorized source exists; the implemented scraper fails the policy check (see [docs/marketplace-source-authorization.md](docs/marketplace-source-authorization.md)).
+> - **Blocked:** automated marketplace discovery. No authorized source exists. The implemented scraper (Apify) and the implemented keyword search through an external search index (Exa, P1-009) both fail the project-policy check; see [docs/marketplace-source-authorization.md](docs/marketplace-source-authorization.md) and [docs/automated-sourcing-live-provider.md](docs/automated-sourcing-live-provider.md).
 > - **Not available yet:** live end-to-end Alibaba sourcing.
 
 ## Requirements
@@ -60,6 +60,7 @@ Run from the repository root:
 | `pnpm source:candidates --case <id> --prepare\|--validate\|--run` | Operator-assisted Alibaba.com candidate intake from a saved fingerprint (offline; see [docs/alibaba-candidate-intake.md](docs/alibaba-candidate-intake.md)) |
 | `pnpm shortlist:images --case <id> [--dry-run] [--top-k <n>]` | Rank a case's recorded candidates by SigLIP 2 image-embedding cosine similarity (local model; see [docs/visual-shortlisting.md](docs/visual-shortlisting.md)) |
 | `pnpm verify:visual --case <id> [--dry-run\|--report]` | Detailed visual verification with GPT-6.1 Sol. Dry run by default; `--live` with `--listing-id`/`--all` and `--max-paid-requests` sends paid requests; `--report` compares saved results offline (see [docs/visual-verification.md](docs/visual-verification.md)) |
+| `pnpm discover:products --case <id>` | Automatic product search from a photo's saved queries through Exa (an external search index restricted to Alibaba.com product pages). Dry run by default; `--live --confirm-paid-search` only when the source is eligible; `--status`, `--resume`, `--fetch-images` (see [docs/automated-sourcing-live-provider.md](docs/automated-sourcing-live-provider.md)) |
 | `pnpm discover:marketplace --case <id> --provider apify --mode image\|keyword\|hybrid` | Automated candidate discovery via a third-party provider. Dry run by default; `--live` needs explicit caps and authorizations; `--resume`, `--replay` (offline), `--fetch-images` (see [docs/automated-marketplace-discovery.md](docs/automated-marketplace-discovery.md)) |
 | `pnpm source:auto --case <id> --source curated\|provider-run\|provider-live --plan\|--run --offline` | Offline orchestration of the whole workflow into one sourcing result; also `--resume <run id> --offline` (see [docs/automated-sourcing-orchestration.md](docs/automated-sourcing-orchestration.md)) |
 | `pnpm check`     | Lint, typecheck, test and build in sequence |

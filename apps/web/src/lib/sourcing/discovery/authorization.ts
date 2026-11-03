@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import { APIFY_PROVIDER_ID, SCRAPEWISE_ACTOR } from "./providers/apify/actor-input";
+import { EXA_CREDENTIAL_ENV, EXA_PROVIDER_ID } from "./providers/exa/exa-api";
 
 /**
  * Source eligibility for live marketplace discovery. Separates what the code
@@ -17,8 +18,15 @@ export type DiscoveryMode = "image" | "keyword" | "hybrid";
 export interface ProviderDefinition {
   id: string;
   label: string;
-  /** "official_api": the marketplace's own API. "licensed_partner": a documented data licence. "scraper": retrieves pages without the marketplace's permission. */
-  acquisition: "official_api" | "licensed_partner" | "scraper";
+  /**
+   * "official_api": the marketplace's own API. "licensed_partner": a documented
+   * data licence. "external_search_index": a web search index that has seen
+   * the marketplace's pages (neither the marketplace nor its partner).
+   * "scraper": retrieves pages without the marketplace's permission.
+   */
+  acquisition: "official_api" | "licensed_partner" | "external_search_index" | "scraper";
+  /** What leaves this machine in a search: the reference photo, or only text from its saved analysis. */
+  sends: "reference_photo_and_text" | "text_only";
   implemented: boolean;
   modes: readonly DiscoveryMode[];
   credentialEnv: string;
@@ -35,6 +43,17 @@ export const PROVIDERS: Record<string, ProviderDefinition> = {
     modes: ["image", "keyword", "hybrid"],
     credentialEnv: "APIFY_TOKEN",
     docs: "docs/automated-marketplace-discovery.md",
+    sends: "reference_photo_and_text",
+  },
+  [EXA_PROVIDER_ID]: {
+    id: EXA_PROVIDER_ID,
+    label: "Exa Search API restricted to Alibaba.com product pages (external web search index, not an official Alibaba.com API or partner)",
+    acquisition: "external_search_index",
+    implemented: true,
+    modes: ["keyword"],
+    credentialEnv: EXA_CREDENTIAL_ENV,
+    docs: "docs/automated-sourcing-live-provider.md",
+    sends: "text_only",
   },
 };
 
@@ -51,7 +70,7 @@ export const marketplaceAccessRecordSchema = z.strictObject({
   providers: z.record(
     z.string(),
     z.strictObject({
-      accessBasis: z.enum(["official_api_agreement", "licensed_partner_agreement"]),
+      accessBasis: z.enum(["official_api_agreement", "licensed_partner_agreement", "search_index_terms_review"]),
       /** Where the written agreement or approval is kept (a reference, not the document). */
       agreementReference: z.string().min(3),
       reviewedBy: z.string().min(1),
@@ -61,6 +80,10 @@ export const marketplaceAccessRecordSchema = z.strictObject({
       liveEnabled: z.boolean(),
       maxResultsPerRun: z.int().min(1).max(50),
       maxCostUsdPerRun: z.number().positive().max(10),
+      /** Downloading listing images from Alibaba.com's image hosts (alicdn.com) for local comparison was reviewed and permitted. */
+      productImageRetrievalApproved: z.boolean().optional(),
+      /** Full provider responses may be stored; otherwise only the fields used are kept. */
+      retainRawResponses: z.boolean().optional(),
       notes: z.string().optional(),
     }),
   ),
@@ -116,7 +139,9 @@ export function checkSourceEligibility(input: { providerId: string; mode: Discov
     Boolean(provider && POLICY_ALLOWED_ACQUISITION.includes(provider.acquisition)),
     provider?.acquisition === "scraper"
       ? "Project rules allow only an official API or an approved partner; this provider scrapes the marketplace, so live use is blocked"
-      : provider
+      : provider?.acquisition === "external_search_index"
+        ? "Project rules allow only an official Alibaba.com API or an approved partner; this provider is an external web search index (neither), so live use is blocked until the project rules are changed by a person"
+        : provider
         ? `Acquisition method: ${provider.acquisition}`
         : "Unknown provider",
   );
@@ -132,7 +157,7 @@ export function checkSourceEligibility(input: { providerId: string; mode: Discov
           ? `${entry.accessBasis} (${entry.agreementReference}), reviewed by ${entry.reviewedBy} on ${entry.reviewedAt}; permitted modes ${entry.permittedModes.join(", ")}`
           : "The access record has no entry for this provider",
   );
-  add("image_transfer", !needsImage || Boolean(entry?.imageTransferApproved), needsImage ? (entry?.imageTransferApproved ? "Sending reference photos to this provider is approved" : "Sending reference photos to this provider has not been approved") : "Not needed for keyword search");
+  add("image_transfer", !needsImage || Boolean(entry?.imageTransferApproved), needsImage ? (entry?.imageTransferApproved ? "Sending reference photos to this provider is approved" : "Sending reference photos to this provider has not been approved") : "Not needed: keyword search sends only text");
   add("live_enabled", Boolean(entry?.liveEnabled), entry?.liveEnabled ? "Live use is enabled in the access record" : "Live use is not enabled");
 
   const failed = checks.find((c) => !c.ok);
@@ -149,4 +174,22 @@ export function checkSourceEligibility(input: { providerId: string; mode: Discov
 /** Eligibility of every implemented provider for one mode, for display. */
 export function discoveryReadiness(mode: DiscoveryMode, env: Record<string, string | undefined>, access: AccessRecordLoad): SourceEligibility[] {
   return Object.keys(PROVIDERS).map((providerId) => checkSourceEligibility({ providerId, mode, env, access }));
+}
+
+/**
+ * Whether listing images found by a provider may be downloaded from Alibaba.com's
+ * image hosts for local comparison. Separate from search permission: it needs an
+ * eligible source and an explicit approval in the access record.
+ */
+export function imageRetrievalAllowed(eligibility: SourceEligibility, access: AccessRecordLoad): { allowed: boolean; detail: string } {
+  if (!eligibility.eligible) return { allowed: false, detail: eligibility.blocker ?? "The source is not eligible" };
+  const entry = access.state === "ok" ? access.record.providers[eligibility.providerId] : undefined;
+  return entry?.productImageRetrievalApproved
+    ? { allowed: true, detail: "Downloading listing images for local comparison is approved in the access record" }
+    : { allowed: false, detail: "Downloading listing images from Alibaba.com has not been approved in the access record (productImageRetrievalApproved)" };
+}
+
+/** Whether full provider responses may be stored (default: only the fields used). */
+export function rawRetentionAllowed(providerId: string, access: AccessRecordLoad): boolean {
+  return access.state === "ok" && access.record.providers[providerId]?.retainRawResponses === true;
 }

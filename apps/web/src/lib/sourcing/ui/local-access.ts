@@ -82,5 +82,7 @@ export function localPaths(root: string = repoRoot()) {
     sourcingRuns: join(local, "sourcing-runs"),
     uploads: join(local, "uploads"),
     candidateIntake: join(local, "candidate-intake"),
+    discovery: join(local, "discovery"),
+    marketplaceAccess: join(local, "marketplace-access.json"),
   };
 }

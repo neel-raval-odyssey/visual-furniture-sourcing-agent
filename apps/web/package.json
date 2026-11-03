@@ -18,6 +18,7 @@
     "shortlist:images": "tsx scripts/shortlist-images.ts",
     "verify:visual": "tsx scripts/verify-visual.ts",
     "discover:marketplace": "tsx scripts/discover-marketplace.ts",
+    "discover:products": "tsx scripts/discover-products.ts",
     "source:auto": "tsx scripts/source-auto.ts"
   },
   "dependencies": {

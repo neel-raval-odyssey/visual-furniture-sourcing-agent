@@ -23,6 +23,8 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
   const comparedLocally = split ? split.notCompared.filter((e) => e.retrieval.siglipRank !== null).length : 0;
   const leadsOnly = pending && comparedLocally === 0;
   const fromUpload = caseId.startsWith("upl-");
+  // Products found by an automatic search (an external search index), as opposed to recorded by hand.
+  const automatic = Boolean(result?.source.providers.some((p) => p.access === "external_search_index"));
 
   return (
     <div className="space-y-14">
@@ -34,8 +36,8 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
         <div className="space-y-4">
           <p className="text-sm font-medium text-accent">{fromUpload ? "Your photo" : `Saved example · ${name}`}</p>
           <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl">{leadsOnly ? "Saved product leads" : pending ? "Products to compare" : "Similar furniture we found"}</h1>
-          <p className="text-lg text-ink-soft">{leadsOnly ? "None of these products has been compared with your photo yet." : pending ? "Potentially similar products — detailed comparison pending." : "Here are the closest designs from the products reviewed."}</p>
-          <SavedExampleNote synthetic={result?.synthetic} source={fromUpload ? "recorded" : "example"} />
+          <p className="text-lg text-ink-soft">{leadsOnly ? "None of these products has been compared with your photo yet." : pending ? "Potentially similar products — detailed verification pending." : "Here are the closest designs from the products reviewed."}</p>
+          <SavedExampleNote synthetic={result?.synthetic} source={automatic ? "automatic" : fromUpload ? "recorded" : "example"} />
           {leadsOnly && fromUpload ? (
             <PrimaryLink href={`/sourcing/find/${caseId}`}>
               Add product photos <Icon name="forward" className="h-5 w-5" />
@@ -76,7 +78,7 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
         <section aria-labelledby="not-compared" className="space-y-5">
           <div>
             <h2 id="not-compared" className="font-serif text-2xl text-ink sm:text-3xl">
-              {leadsOnly ? "Photo needed" : pending ? "Potentially similar products — detailed comparison pending" : "Not yet compared"}
+              {leadsOnly ? "Photo needed" : pending ? "Potentially similar products — detailed verification pending" : "Not yet compared"}
             </h2>
             <p className="mt-1 text-ink-soft">
               {leadsOnly
