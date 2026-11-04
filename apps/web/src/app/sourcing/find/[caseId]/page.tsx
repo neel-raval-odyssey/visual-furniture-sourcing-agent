@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { FindView } from "@/components/sourcing/intake/find-view";
 import { Notice } from "@/components/sourcing/primitives";
 import type { AutomaticSearchCard } from "@/components/sourcing/intake/automatic-search-view";
+import type { CatalogueSearchCard } from "@/components/sourcing/intake/catalogue-search-view";
+import { listCatalogueSearches } from "@/lib/sourcing/ui/discovery/catalogue-search";
 import { automaticSearchPlan, listAutomaticSearches } from "@/lib/sourcing/ui/discovery/automatic-search";
 import { getReference, getRun } from "@/lib/sourcing/ui/data";
 import { loadRunJournal } from "@/lib/sourcing/orchestration/journal";
@@ -13,6 +15,9 @@ import { humanize } from "@/lib/sourcing/ui/labels";
 import { localPaths } from "@/lib/sourcing/ui/local-access";
 import { localPageAllowed } from "@/lib/sourcing/ui/page-gate";
 import { loadSavedFingerprint } from "@/lib/sourcing/understanding/saved/saved-fingerprint";
+import { browserAssistView } from "@/lib/sourcing/browser-assist/session";
+import { currentLauncher } from "@/lib/sourcing/browser-assist/launcher";
+import { resolveReferenceImage } from "@/lib/sourcing/shortlisting/evidence";
 
 export const metadata: Metadata = { title: "Find similar products" };
 
@@ -34,7 +39,15 @@ export default async function FindPage({ params }: { params: Promise<{ caseId: s
   const fp = saved.fingerprint;
   // Eligibility is computed from configuration and the private access record; no request is made.
   const plan = await automaticSearchPlan(paths, saved);
-  const [intake, collection, searches] = await Promise.all([getIntakeState(paths, caseId), readCollection(paths, caseId), listAutomaticSearches(paths, caseId)]);
+  // The supervised Alibaba.com window: availability and the open session, from files and the in-memory window handle only.
+  const browserView = await browserAssistView(paths, caseId, currentLauncher(paths.root));
+  const photoPath = await resolveReferenceImage(paths.imagesMap, saved).then((r) => r.path).catch(() => null);
+  const [intake, collection, searches, catalogueSearches] = await Promise.all([
+    getIntakeState(paths, caseId),
+    readCollection(paths, caseId),
+    listAutomaticSearches(paths, caseId),
+    listCatalogueSearches(paths, caseId),
+  ]);
   // Each run records the hash of the product set it used, so a run belongs to the hand-collected list or to one automatic search.
   const runs: { runId: string; sha: string | null }[] = [];
   for (const r of ref.runs.filter((x) => x.result.available)) {
@@ -47,7 +60,7 @@ export default async function FindPage({ params }: { params: Promise<{ caseId: s
     return hit && result ? { runId: hit.runId, shortlisted: result.counts.shortlisted, compared: result.counts.verified } : null;
   };
   // The hand-collected list's latest run (automatic-search runs are shown with their search).
-  const autoShas = new Set(searches.map((s) => s.manifestSha256).filter(Boolean));
+  const autoShas = new Set([...searches, ...catalogueSearches].map((s) => s.manifestSha256).filter(Boolean));
   const latest = runs.find((r) => !r.sha || !autoShas.has(r.sha));
   const result = latest ? (await getRun(paths, caseId, latest.runId))?.result : null;
   const current = Boolean(collection && latest?.sha === collection.sha256);
@@ -64,6 +77,17 @@ export default async function FindPage({ params }: { params: Promise<{ caseId: s
       run: await runFor(s.manifestSha256),
     });
   }
+  const catalogue: CatalogueSearchCard[] = [];
+  for (const s of catalogueSearches) {
+    catalogue.push({
+      discoveryId: s.discoveryId,
+      createdAt: s.createdAt,
+      status: s.status,
+      summary: s.summary,
+      products: s.products.map((p) => ({ ...p, imageUrl: p.hasPhoto ? `/api/sourcing/evidence/discovery/${caseId}/${s.discoveryId}/${p.index}` : null })),
+      run: await runFor(s.manifestSha256),
+    });
+  }
   return (
     <FindView
       caseId={caseId}
@@ -72,10 +96,12 @@ export default async function FindPage({ params }: { params: Promise<{ caseId: s
       queries={fp.searchQueries}
       automatic={{
         available: plan.eligibility.eligible && plan.problems.length === 0,
-        reason: plan.eligibility.eligible ? plan.problems.join("; ") : "No approved marketplace data source is set up, so products are added by hand for now.",
+        reason: plan.eligibility.eligible ? plan.problems.join("; ") : "No approved marketplace data source is set up yet. Meanwhile, search the saved catalogue or add products by hand.",
         providerLabel: plan.providerLabel,
         searches: cards,
       }}
+      catalogue={catalogue}
+      browser={{ view: browserView, photoPath }}
       intake={intake}
       collection={collection ? { products: collection.products, withPhoto: collection.withPhoto, revisable: collection.revisable } : null}
       revisionChanges={intake.draft ? await describeRevision(paths, intake.draft) : null}

@@ -332,7 +332,8 @@ export async function listAutomaticSearches(paths: Paths, caseId: string): Promi
   if (!CASE_ID.test(caseId)) return [];
   const views: AutomaticSearchView[] = [];
   for (const { dir, journal } of await journals(join(paths.discovery, caseId))) {
-    if (journal.caseId !== caseId) continue;
+    // Catalogue searches (local records) are listed separately, never as marketplace searches.
+    if (journal.caseId !== caseId || journal.provider.service === "local_catalogue") continue;
     const summary = journal.summaryFile ? ((await readFile(join(dir, journal.summaryFile), "utf8").then(JSON.parse).catch(() => null)) as AutomaticSearchSummary | null) : null;
     let manifest: CandidateManifest | null = null;
     let manifestSha256: string | null = null;

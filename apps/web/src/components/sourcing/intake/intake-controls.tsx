@@ -90,7 +90,7 @@ const FOUND_WITH_LABELS: [string, string][] = [
   ["other", "Other page on Alibaba.com"],
 ];
 
-function Field({ label, name, hint, error, defaultValue, type = "text", required = false, inputMode, autoComplete = "off" }: { label: string; name: string; hint?: string; error?: string | null; defaultValue?: string; type?: string; required?: boolean; inputMode?: "decimal" | "numeric" | "url"; autoComplete?: string }) {
+export function Field({ label, name, hint, error, defaultValue, type = "text", required = false, inputMode, autoComplete = "off" }: { label: string; name: string; hint?: string; error?: string | null; defaultValue?: string; type?: string; required?: boolean; inputMode?: "decimal" | "numeric" | "url"; autoComplete?: string }) {
   return (
     <label className="block space-y-1">
       <span className="text-sm font-medium text-ink">

@@ -8,6 +8,7 @@ import { describeDiscoveryState, normalizeSavedRuns, type DiscoveryStateView } f
 import { JournalError, loadJournal } from "../discovery/providers/apify/run-journal";
 import { ProviderSchemaError } from "../discovery/providers/apify/normalize";
 import { normalizeExaSavedRuns } from "../discovery/providers/exa/discovery-run";
+import { loadCatalogueSearch } from "../discovery/providers/local-catalogue/catalogue";
 import type { CandidateListing } from "../domain";
 import type { ImageSimilarityRunner } from "../shortlisting/embedding-client";
 import { EmbeddingProtocolError, EmbeddingServiceError } from "../shortlisting/protocol";
@@ -149,7 +150,9 @@ export async function loadProviderRunCandidates(runDir: string, label: string, r
     const normalized =
       journal.provider.service === "exa"
         ? await normalizeExaSavedRuns(runDir, journal, ref.saved).then((build) => ({ build, providerErrors: [] as { mode: string; code: string; message: string }[] }))
-        : await normalizeSavedRuns(runDir, journal, ref.saved);
+        : journal.provider.service === "local_catalogue"
+          ? await catalogueRun(runDir, journal, label)
+          : await normalizeSavedRuns(runDir, journal, ref.saved);
     let manifest = normalized.build.manifest;
     let manifestSha256 = sha256(JSON.stringify(manifest));
     let origin: DiscoveryDiagnostics["manifestOrigin"] = "normalized_offline_from_snapshots";
@@ -190,6 +193,14 @@ export async function loadProviderRunCandidates(runDir: string, label: string, r
     if (error instanceof StageError) throw error;
     asStageError(error);
   }
+}
+
+/** A saved local-catalogue search: its recorded manifest (required) and its recorded decisions; copied photos are hash-checked. */
+async function catalogueRun(runDir: string, journal: Awaited<ReturnType<typeof loadJournal>>, label: string) {
+  if (!journal.manifestFile) throw new StageError("failed", `Catalogue search ${journal.discoveryId} has no saved product set`);
+  const { rejections } = await loadCatalogueSearch(runDir, journal);
+  const loaded = await loadManifest(join(runDir, journal.manifestFile), `${label}/${journal.manifestFile}`);
+  return { build: { manifest: loaded.manifest, rejections }, providerErrors: [] as { mode: string; code: string; message: string }[] };
 }
 
 /** Live provider acquisition is not authorized; the stage is always blocked. */

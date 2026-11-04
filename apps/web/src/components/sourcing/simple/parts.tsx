@@ -92,7 +92,15 @@ export function ProductCard({ entry, imageUrl, href }: { entry: SourcingEntry; i
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
           <Link href={href} className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-line-strong px-4 text-sm font-medium text-ink hover:border-ink">
-            Compare<span className="sr-only"> with the original: {name}</span>
+            {entry.imageEvidence.status === "available" ? (
+              <>
+                Compare<span className="sr-only"> with the original: {name}</span>
+              </>
+            ) : (
+              <>
+                View product details<span className="sr-only">: {name}</span>
+              </>
+            )}
             <Icon name="forward" className="h-4 w-4" />
           </Link>
           <ExternalLink href={entry.listingUrl} className="text-sm">
@@ -105,14 +113,16 @@ export function ProductCard({ entry, imageUrl, href }: { entry: SourcingEntry; i
 }
 
 /** The honest status line shown wherever saved example data appears. */
-export function SavedExampleNote({ synthetic = false, source = "example" }: { synthetic?: boolean; source?: "example" | "recorded" | "automatic" }) {
+export function SavedExampleNote({ synthetic = false, source = "example" }: { synthetic?: boolean; source?: "example" | "recorded" | "automatic" | "catalogue" }) {
   return (
     <p className="flex items-start gap-2 text-sm text-muted">
       <Icon name="info" className="mt-0.5 h-4 w-4 shrink-0" />
       <span>
         {synthetic
           ? "This example uses made-up test listings, not real Alibaba products."
-          : source === "automatic"
+          : source === "catalogue"
+            ? "These products were selected from product records already saved on this computer and compared with the original photo here. This is not a live Alibaba.com search; prices are as listed when each product was saved. Live Alibaba discovery is awaiting provider access."
+            : source === "automatic"
             ? "These products were found automatically through a web search index limited to Alibaba.com product pages. They are not checked by Alibaba.com, and prices may be out of date."
             : source === "recorded"
             ? "These products were recorded by hand from Alibaba.com listings. Live marketplace search is not yet available."

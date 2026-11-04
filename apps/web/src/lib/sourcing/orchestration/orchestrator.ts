@@ -219,7 +219,12 @@ export async function runOrchestration(config: OrchestratorConfig, mode: "plan" 
       listings.length === 0 ? "skipped" : missing ? "partial" : "completed",
       listings.length === 0 ? "no candidates" : `${available.length} of ${evidence.length} with a usable local image`,
     );
-    if (evidence.some((e) => e.status === "remote_only") && source.kind === "provider-run" && candidates.imported.dataSource === "live") {
+    if (
+      evidence.some((e) => e.status === "remote_only") &&
+      source.kind === "provider-run" &&
+      candidates.imported.dataSource === "live" &&
+      candidates.imported.providers.every((p) => p.access !== "local_catalogue")
+    ) {
       followUps.push(
         `Some listings have only remote image URLs. Caching them is an external operation needing its own authorization: pnpm discover:marketplace --case ${caseId} --fetch-images ${source.discoveryRun} --data-use-reviewed`,
       );

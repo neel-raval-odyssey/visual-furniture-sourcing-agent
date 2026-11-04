@@ -83,6 +83,8 @@ export function localPaths(root: string = repoRoot()) {
     uploads: join(local, "uploads"),
     candidateIntake: join(local, "candidate-intake"),
     discovery: join(local, "discovery"),
+    /** Supervised Alibaba.com browser sessions: action journals and product photos awaiting confirmation. */
+    browserSessions: join(local, "browser-sessions"),
     marketplaceAccess: join(local, "marketplace-access.json"),
   };
 }

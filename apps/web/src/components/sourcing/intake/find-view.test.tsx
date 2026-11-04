@@ -72,8 +72,10 @@ describe("find similar products", () => {
     const page = primary(html);
     expect(page).toContain("Ready to find similar products");
     expect(page).toContain("Add product leads");
-    expect(page).toContain("Automatic marketplace search");
+    expect(page).toContain("Live Alibaba discovery — awaiting provider access");
     expect(page).toContain("Not available yet.");
+    expect(page).toContain("Search saved catalogue");
+    expect(page).toContain("Find similar furniture among products already saved on this computer. No marketplace search or paid AI request.");
     expect(html).toMatch(/<button[^>]*disabled=""[^>]*>Search automatically \(unavailable\)<\/button>/);
     expect(html).not.toMatch(/<button(?![^>]*disabled)[^>]*>[^<]*Search automatically/);
     expect(html).toContain(`src="/api/sourcing/evidence/reference/${caseId}"`);

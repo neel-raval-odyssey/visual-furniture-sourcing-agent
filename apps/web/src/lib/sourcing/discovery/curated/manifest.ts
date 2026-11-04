@@ -28,6 +28,8 @@ export const CAPTURE_TOOLS = [
   /** Searches run by this application through a discovery provider (capture.method "provider_api"). */
   "provider_image_search",
   "provider_keyword_search",
+  /** Selected by this application from product records already saved on this computer (local catalogue). */
+  "provider_catalogue_search",
 ] as const;
 export const captureToolSchema = z.enum(CAPTURE_TOOLS);
 
@@ -123,8 +125,10 @@ export const captureProviderSchema = z.strictObject({
    * official_api: Alibaba.com's own API. third_party_service: a third-party
    * scraper service. external_search_index: a web search index that found the
    * listing pages (not Alibaba.com, and not a verification of the listing).
+   * local_catalogue: product records already saved on this computer (no
+   * marketplace request; the original records keep their own provenance).
    */
-  access: z.enum(["official_api", "third_party_service", "external_search_index"]),
+  access: z.enum(["official_api", "third_party_service", "external_search_index", "local_catalogue"]),
   runs: z
     .array(
       z.strictObject({

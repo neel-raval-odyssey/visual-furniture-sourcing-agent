@@ -165,6 +165,29 @@ The upload page says **"Photo saved successfully"** and offers **Analyze this ph
 
 The run page polls `GET /api/sourcing/runs/<case>/<run>` only while the journal says `running`: every 2 s, at most 90 times, stopping at a terminal state. There is no queue or worker.
 
+## 8a. Saved catalogue (local catalogue mode)
+
+"Search saved catalogue" on the find page searches product records already saved on this computer, then compares the relevant ones with the photo locally. It is a second candidate source behind the same contracts a live provider uses, not live Alibaba discovery (which stays blocked until a source is authorized).
+
+- **Catalogue:** every completed, valid, genuine manifest in `evals/local/candidates/*.json`. Invalid, unfinished, synthetic and catalogue-result manifests are skipped with a recorded reason. The originals are only read.
+- **Selection** (`discovery/providers/local-catalogue/`): the furniture type from the saved Luna fingerprint (subtype, then category, then queries) against each product's title or recorded category. Same type first, then explicitly related types (for example a side table for a coffee table); different or unrecognised types are excluded with a reason. Shared descriptive words only order ties. One record per product identity; at most 20. SigLIP 2 does the visual ranking.
+- **Photos:** each selected product's first usable local photo is checked (confined to its folder, real PNG/JPEG/WebP) and copied under its SHA-256. Products without a usable photo stay as uncompared leads. A copied photo that later changes fails the comparison.
+- **Records:** `evals/local/discovery/<case>/<disc-id>/` with `run.json` (provider `local-catalogue`, access `local_catalogue`, cost 0), `catalogue-matches.json` (every decision with originating manifest, index, manifest hash, original photo path and hash), a `provider_api` manifest `<case>.json`, the copied photos and `import-summary.json`.
+- **Comparison:** the normal offline sourcing run over that folder (`provider-run` source): SigLIP 2 locally (cached checkpoint only), compatible saved Sol records reused by case, listing, image hash and settings; missing ones stay pending with the exact `verify:visual` command. No marketplace, image-download or paid request.
+- **Repeats:** unchanged inputs return the earlier search and comparison (no new inference). Route: `POST /api/sourcing/catalogue/[caseId]` with `{ "action": "search" }` (local, same-origin only).
+
+## 8b. Supervised Alibaba.com browser window
+
+"Open Alibaba.com in a separate window" on the find page is operator-assisted intake with a browser assistant, not automated discovery. It is not a discovery provider, and the provider authorization gate is unchanged.
+
+- **Who does what:** the person searches Alibaba.com's own website in a dedicated, visible Chrome window: camera (image) search with the reference photo, sign-in, any check Alibaba.com shows, and opening listings. The application opens and closes the window, lists which tabs are Alibaba.com product pages (addresses and titles from the browser, no page content), and, on "Add this product" for one tab, records its address and a screenshot of the largest picture visible on screen. It never clicks, types, scrolls, navigates, uploads, reads page text or reads cookies (`browser-assist/chrome-driver.ts`; a test pins the DevTools commands it may send).
+- **Why this scope:** Alibaba.com's terms prohibit systematic retrieval of site content into a collection without written permission, and project rules allow automated Alibaba discovery only through an authorized integration. Each product is chosen and confirmed individually, at most 20 per session.
+- **Browser:** system Chrome started with `--remote-debugging-pipe` (no debugging port that other programs could attach to), no automation flags, and a dedicated profile outside the project (`~/.vfsa/alibaba-browser-profile` by default, `VFSA_BROWSER_PROFILE_DIR`), so sign-in data never enters project files.
+- **Review:** one capture at a time awaits review. The person checks the title (suggested from the tab title), types supplier, price and MOQ as shown, and chooses whether to keep the picture. Discarded, unreviewed or interrupted captures are deleted. Addresses are validated as Alibaba.com product-detail pages (tracking parameters removed), and duplicates of products already in the list are refused.
+- **Records:** `evals/local/browser-sessions/<case>/<session>/session.json` journals every action (opened, captured, refused, confirmed, discarded, closed, interrupted) without cookies, passwords or the profile location. Confirmed products go into the existing product-list draft (a new version when a list already exists, so the saved list stays unchanged until "Save this version"), with a note recording the session and capture.
+- **Comparison:** after the list is saved, the usual run compares products with photos (SigLIP 2 locally, compatible Sol records reused, new Sol requests only with separate approval).
+- **Route:** `POST /api/sourcing/browser/[caseId]` with `action` = `start`, `tabs`, `capture`, `confirm`, `discard` or `close`; `GET ?session=&capture=` serves a capture awaiting review. Local, same-origin only.
+
 ## 9. How saved model evidence is shown
 
 **Sol evidence** comes from `result.json` (which itself comes from saved records), grouped as:

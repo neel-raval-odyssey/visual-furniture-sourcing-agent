@@ -8,6 +8,9 @@ import { Badge, ExternalLink, Icon, Notice } from "../primitives";
 import { RunOfflineButton } from "../run-offline-button";
 import { Disclosure, PrimaryLink, SecondaryLink } from "../simple/parts";
 import { AutomaticSearchPanel, SavedSearches, type AutomaticAvailability } from "./automatic-search-view";
+import type { AssistView } from "@/lib/sourcing/browser-assist/session";
+import { BrowserAssistant } from "./browser-assistant";
+import { CataloguePanel, CatalogueSearches, type CatalogueSearchCard } from "./catalogue-search-view";
 import { CompleteButton, CopyButton, DiscardButton, EntryActions, EntryForm, PhotoUpload, StartIntakeButton, StartRevisionButton, type EntryFormValues } from "./intake-controls";
 
 /**
@@ -26,6 +29,10 @@ export interface FindViewProps {
   queries: string[];
   /** Whether an automatic source is eligible, and the saved automatic searches (a separate candidate set). */
   automatic: AutomaticAvailability;
+  /** Saved local-catalogue searches, newest first (a separate candidate set from the hand-collected list). */
+  catalogue?: CatalogueSearchCard[];
+  /** The supervised Alibaba.com window (you search; the app records the products you confirm). */
+  browser?: { view: AssistView; photoPath: string | null };
   intake: IntakeState;
   /** The current saved product list (any intake path), or null. */
   collection: { products: CollectionProduct[]; withPhoto: number; revisable: boolean } | null;
@@ -134,6 +141,8 @@ function ChangeSummary({ changes }: { changes: RevisionChanges }) {
 
 export function FindView(props: FindViewProps) {
   const { caseId, photoUrl, furnitureType, queries, automatic, intake, collection, revisionChanges, latestRun } = props;
+  const catalogue = props.catalogue ?? [];
+  const browser = props.browser ? <BrowserAssistant caseId={caseId} view={props.browser.view} photoPath={props.browser.photoPath} /> : null;
   const draft = intake.draft;
   const revising = Boolean(draft?.basedOn);
   const draftEntries = draft?.entries ?? [];
@@ -165,7 +174,9 @@ export function FindView(props: FindViewProps) {
 
       {!draft && !collection ? (
         <section className="grid gap-5 md:grid-cols-2">
-          <div className="space-y-3 rounded-2xl border border-accent/25 bg-accent-soft p-5">
+          <CataloguePanel caseId={caseId} hasSearch={catalogue.length > 0} />
+          {browser}
+          <div className="space-y-3 rounded-2xl border border-line bg-paper p-5">
             <p className="font-medium text-ink">Add product leads</p>
             <p className="text-sm text-ink-soft">Search Alibaba.com yourself, then record each product you find, with its supplier and a photo. It takes a few minutes per product, with no forms to edit by hand.</p>
             <StartIntakeButton caseId={caseId} />
@@ -173,10 +184,23 @@ export function FindView(props: FindViewProps) {
           <AutomaticSearchPanel caseId={caseId} automatic={automatic} />
         </section>
       ) : !draft ? (
-        <section className="max-w-xl">
+        <section className="grid gap-5 md:grid-cols-2">
+          <CataloguePanel caseId={caseId} hasSearch={catalogue.length > 0} />
+          {browser}
           <AutomaticSearchPanel caseId={caseId} automatic={automatic} />
         </section>
       ) : null}
+
+      {draft && browser ? (
+        <section aria-labelledby="browser-search" className="space-y-3">
+          <h2 id="browser-search" className="font-serif text-2xl text-ink">
+            Search Alibaba.com with your photo
+          </h2>
+          {browser}
+        </section>
+      ) : null}
+
+      {!draft ? <CatalogueSearches caseId={caseId} searches={catalogue} furnitureType={furnitureType} /> : null}
 
       {!draft ? <SavedSearches caseId={caseId} searches={automatic.searches ?? []} /> : null}
 
@@ -331,6 +355,7 @@ export function FindView(props: FindViewProps) {
             Reference {caseId}. The current product list is an operator-assisted candidate manifest in evals/local/candidates/{caseId}.json, which the existing intake, shortlisting, verification and sourcing commands read. Each saved version is kept in evals/local/candidate-intake/{caseId}/.
           </p>
           <p>Automatic search: {automatic.available ? "eligible" : automatic.reason}</p>
+          <p>Saved catalogue: searches read the completed product lists in evals/local/candidates/ and are saved separately in evals/local/discovery/{caseId}/; they never change any product list.</p>
           {automatic.providerLabel ? <p>Automatic source: {automatic.providerLabel}. Its searches are saved separately in evals/local/discovery/{caseId}/ and never change the hand-collected list.</p> : null}
           <SecondaryLink href={`/sourcing/references/${caseId}`}>Open in the advanced workspace</SecondaryLink>
         </div>

@@ -25,6 +25,8 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
   const fromUpload = caseId.startsWith("upl-");
   // Products found by an automatic search (an external search index), as opposed to recorded by hand.
   const automatic = Boolean(result?.source.providers.some((p) => p.access === "external_search_index"));
+  // Products selected from records already saved on this computer (local catalogue).
+  const catalogue = Boolean(result?.source.providers.some((p) => p.access === "local_catalogue"));
 
   return (
     <div className="space-y-14">
@@ -37,15 +39,21 @@ export function SimpleResultsView({ caseId, runId, result }: { caseId: string; r
           <p className="text-sm font-medium text-accent">{fromUpload ? "Your photo" : `Saved example · ${name}`}</p>
           <h1 className="font-serif text-4xl leading-tight text-ink sm:text-5xl">{leadsOnly ? "Saved product leads" : pending ? "Products to compare" : "Similar furniture we found"}</h1>
           <p className="text-lg text-ink-soft">{leadsOnly ? "None of these products has been compared with your photo yet." : pending ? "Potentially similar products — detailed verification pending." : "Here are the closest designs from the products reviewed."}</p>
-          <SavedExampleNote synthetic={result?.synthetic} source={automatic ? "automatic" : fromUpload ? "recorded" : "example"} />
+          <SavedExampleNote synthetic={result?.synthetic} source={catalogue ? "catalogue" : automatic ? "automatic" : fromUpload ? "recorded" : "example"} />
           {leadsOnly && fromUpload ? (
             <PrimaryLink href={`/sourcing/find/${caseId}`}>
               Add product photos <Icon name="forward" className="h-5 w-5" />
             </PrimaryLink>
+          ) : result && !result.synthetic ? (
+            <Link href={`/sourcing/find/${caseId}`} className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-accent underline-offset-4 hover:underline">
+              Find more similar products <Icon name="forward" className="h-4 w-4" />
+            </Link>
           ) : null}
         </div>
         <EvidenceImage src={referenceImageUrl(caseId)} alt={`Original furniture photo: ${name}`} label="Original" priority />
       </header>
+
+      {result && catalogue ? <RunProgress result={result} /> : null}
 
       {!result || !split ? (
         <Notice tone="neutral" title="No saved results for this photo yet">
@@ -160,6 +168,53 @@ function FeaturedResult({ entry, imageUrl, href }: { entry: SourcingEntry; image
           <ExternalLink href={entry.listingUrl}>View on Alibaba</ExternalLink>
         </div>
       </div>
+    </section>
+  );
+}
+
+type Step = { label: string; state: "done" | "pending" | "blocked" | "failed"; note?: string };
+const STEP_STYLE: Record<Step["state"], { word: string; tone: string }> = {
+  done: { word: "Done", tone: "text-ok" },
+  pending: { word: "Pending", tone: "text-muted" },
+  blocked: { word: "Not possible", tone: "text-warn" },
+  failed: { word: "Failed", tone: "text-bad" },
+};
+
+/** The stages of a catalogue comparison, as recorded in its saved result (never estimated). */
+export function runSteps(result: SourcingResult): Step[] {
+  const s = result.stages;
+  const ok = (state: string) => state === "completed" || state === "reused" || state === "partial";
+  const c = result.counts;
+  const sol = s.verification.state;
+  return [
+    { label: "Reference understood", state: ok(s.reference.state) ? "done" : "failed" },
+    { label: "Searching saved catalogue", state: ok(s.candidates.state) ? "done" : "failed", note: `${c.candidates} relevant product${c.candidates === 1 ? "" : "s"} selected` },
+    { label: "Candidate photographs checked", state: ok(s.image_evidence.state) ? "done" : s.image_evidence.state === "skipped" ? "blocked" : "failed", note: `${c.withLocalImage} of ${c.candidates} with a usable photo` },
+    {
+      label: "Comparing furniture designs locally",
+      state: ok(s.shortlist.state) ? "done" : s.shortlist.state === "skipped" ? "blocked" : "failed",
+      note: ok(s.shortlist.state) ? `${c.shortlisted} compared on this computer${s.shortlist.state === "reused" ? " (saved comparison reused)" : ""}` : (s.shortlist.message ?? undefined),
+    },
+    {
+      label: c.verified + c.abstained === 0 ? "Detailed verification pending" : sol === "reused" ? "Detailed verification reused" : "Detailed verification partly reused",
+      state: c.verified + c.abstained > 0 ? "done" : "pending",
+      note: c.verified + c.abstained > 0 ? `${c.verified + c.abstained} saved assessment${c.verified + c.abstained === 1 ? "" : "s"} reused; no new paid request` : "Needs a separate approval because it is a paid request.",
+    },
+    { label: "Results ready", state: s.assembly.state === "completed" ? "done" : "pending" },
+  ];
+}
+
+function RunProgress({ result }: { result: SourcingResult }) {
+  return (
+    <section aria-label="Progress">
+      <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {runSteps(result).map((step) => (
+          <li key={step.label} className="rounded-xl border border-line bg-paper px-3 py-2 text-sm">
+            <span className={`font-medium ${STEP_STYLE[step.state].tone}`}>{STEP_STYLE[step.state].word}</span> · <span className="text-ink">{step.label}</span>
+            {step.note ? <span className="block text-xs text-muted">{step.note}</span> : null}
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }

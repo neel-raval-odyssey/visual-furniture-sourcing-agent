@@ -147,6 +147,14 @@ pnpm discover:marketplace --case ettrick-bed --provider apify --mode image --dry
 pnpm discover:marketplace --case ettrick-bed --provider apify --mode keyword --dry-run
 ```
 
+## Searching the saved catalogue
+
+On an analysed photo's "Find similar products" page, **Search saved catalogue** selects relevant products from the product lists already saved on this computer (by furniture type from the saved analysis), compares them with the photo locally with SigLIP 2, and reuses compatible saved Sol assessments. No marketplace search, image download or paid AI request. Details: [docs/visual-sourcing-web-experience.md](docs/visual-sourcing-web-experience.md) section 8a.
+
+## Searching Alibaba.com with your photo (supervised browser window)
+
+On the "Find similar products" page, **Open Alibaba.com in a separate window** opens a dedicated, visible Chrome window. You search there yourself with Alibaba.com's camera (image) search and your photo, sign in or answer any check Alibaba.com shows, and open the products you like. The app lists the product tabs you opened; for the one you choose it records the address and a screenshot of the main picture on screen, and adds it to the product list only after you check the details and confirm. The app never clicks, types, scrolls or uploads on Alibaba.com and reads no page text. Requires Google Chrome. Details: [docs/visual-sourcing-web-experience.md](docs/visual-sourcing-web-experience.md) section 8b.
+
 ## Shortlisting candidates by image similarity
 
 Needs the Python environment and a one-time model download ([services/vision/README.md](services/vision/README.md)). Inference runs locally; nothing is fetched or sent anywhere.
